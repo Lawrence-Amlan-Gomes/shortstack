@@ -24,7 +24,8 @@ linkRouter.post('/', async (req: Request, res: Response) => {
   );
 
   const { slug: savedSlug } = result.rows[0];
-  res.status(201).json({ slug: savedSlug, short: `http://localhost:3000/${savedSlug}` });
+  const base = process.env.BASE_URL ?? 'http://localhost:3000';
+  res.status(201).json({ slug: savedSlug, short: `${base}/${savedSlug}` });
 });
 
 linkRouter.get('/:slug', async (req: Request<{ slug: string }>, res: Response) => {
