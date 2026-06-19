@@ -126,31 +126,38 @@ The goal isn't to finish fast. It's to finish right and for Lawrence to understa
 
 *(Updated at end of each session. Read this first when @skill_coFounder.md is triggered.)*
 
-**Status:** Session 1 complete.
+**Status:** Session 2 complete.
 
 **Project:** ShortStack — URL shortener with click analytics. Learning vehicle for full backend stack: Express → PostgreSQL → Docker → Redis → BullMQ → Nginx → Kafka → CDN → load balancing → Hostinger VPS deploy via Coolify.
 
-**Last completed:**
-- Express 5 + TypeScript scaffolded from scratch
-- Routes: `POST /api/links` (create slug), `GET /api/links/:slug` (301 redirect), `GET /health`
-- Error handler middleware
-- nodemon dev workflow
-- Project restructured: shortstack/ contents moved to root (`Backend DeepDive/`)
-- CLAUDE.md updated to reflect ShortStack project
-- Lawrence manually renaming folder to `shortstack` after session
+**Live at:** https://shortstack.lawrenceamlangomes.com
 
-**Next action:** Add PostgreSQL. Steps:
-1. `docker-compose.yml` with postgres service
-2. Install `pg` + `@types/pg`
-3. Write first SQL migration — create `links` table (id, slug, url, created_at)
-4. Replace in-memory `links` object with DB queries
-5. Teach: JOINs, indexes, transactions (start simple — just INSERT + SELECT)
+**Last completed:**
+- PostgreSQL connected via `pg` pool (Coolify service on VPS, publicly exposed port 5432)
+- `src/db/pool.ts` — connection pool singleton
+- `src/db/migrate.ts` — creates `links` table on boot (SERIAL, VARCHAR, TEXT, TIMESTAMPTZ)
+- Zod validation on `POST /api/links` — rejects non-URLs
+- Root-level `GET /:slug` redirect added to `app.ts` (bit.ly style)
+- `Dockerfile` — multi-stage build (builder compiles TS, final image ships JS only)
+- `.dockerignore` — keeps image clean
+- `BASE_URL` env var — short URL uses real domain in production
+- GitHub repo created: https://github.com/Lawrence-Amlan-Gomes/shortstack.git
+- CI/CD wired: push to main → Coolify auto-deploys
+- TablePlus connected to VPS Postgres for visual DB inspection
+- Lawrence understands: REST API mental model, connection pooling, parameterized queries, multi-stage Docker, one backend → many frontends
+
+**Next action:** Click analytics.
+1. Create `clicks` table: `id, slug, clicked_at` (or add `click_count` to `links` — discuss tradeoffs)
+2. On every `GET /:slug` redirect → INSERT a click record
+3. Add `GET /api/links/:slug/stats` → returns `{ slug, clicks: 42 }`
+4. Teach: aggregate SQL (COUNT, GROUP BY), why analytics go in a separate table
 
 **Open decisions:**
-- ORM vs raw SQL? Recommend raw `pg` first so Lawrence sees real SQL, then layer Drizzle later
-- URL validation — add `zod` schema to POST /api/links next session
+- ORM vs raw SQL — staying raw `pg` for now, Drizzle later
+- Separate `clicks` table vs `click_count` column on `links` — recommend separate table (teaches JOINs, time-series data, extensibility)
 
 **Technical debt / deferred:**
-- No URL format validation (accepts any string)
-- No duplicate slug collision handling
-- Folder rename pending (Backend DeepDive → shortstack, Lawrence doing manually)
+- Slug collision possible — no retry loop if random slug already exists
+- No duplicate URL detection — same long URL can get multiple slugs
+- `GET /:slug` in app.ts and `GET /api/links/:slug` in links.ts duplicate DB query — refactor later
+- No CORS headers — will block frontend teams on different domains (add when connecting a frontend)
