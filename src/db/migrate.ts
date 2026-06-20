@@ -33,6 +33,9 @@ export async function migrate(): Promise<void> {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS app VARCHAR(50) NOT NULL DEFAULT 'default'
   `);
 
+  // Remove name column if it exists from a previous schema
+  await pool.query(`ALTER TABLE users DROP COLUMN IF EXISTS name`);
+
   // Drop old email-only unique constraint if it exists, replace with (email, app)
   await pool.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key`);
   await pool.query(`
