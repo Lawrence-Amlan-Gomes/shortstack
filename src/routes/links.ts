@@ -43,3 +43,20 @@ linkRouter.get('/:slug', async (req: Request<{ slug: string }>, res: Response) =
 
   res.redirect(301, result.rows[0].url);
 });
+
+linkRouter.get('/:slug/stats', async (req: Request<{ slug: string }>, res: Response) => {
+  const { slug } = req.params;
+
+  const linkResult = await pool.query('SELECT 1 FROM links WHERE slug = $1', [slug]);
+  if (linkResult.rows.length === 0) {
+    res.status(404).json({ error: 'link not found' });
+    return;
+  }
+
+  const statsResult = await pool.query<{ clicks: string }>(
+    'SELECT COUNT(*) AS clicks FROM clicks WHERE slug = $1',
+    [slug]
+  );
+
+  res.json({ slug, clicks: Number(statsResult.rows[0].clicks) });
+});

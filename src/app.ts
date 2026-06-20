@@ -22,6 +22,7 @@ app.get('/:slug', async (req: Request<{ slug: string }>, res: Response) => {
     res.status(404).json({ error: 'link not found' });
     return;
   }
+  await pool.query('INSERT INTO clicks (slug) VALUES ($1)', [slug]);
   res.redirect(301, result.rows[0].url);
 });
 
