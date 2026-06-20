@@ -1,11 +1,17 @@
 import 'dotenv/config';
 import express, { Request, Response } from 'express';
+import cors from 'cors';
 import { linkRouter } from './routes/links';
+import { authRouter } from './routes/auth';
 import { errorHandler } from './middleware/errorHandler';
 import { pool } from './db/pool';
 
 export const app = express();
 
+app.use(cors({
+  origin: process.env.FRONTEND_URL ?? '*',
+  credentials: true,
+}));
 app.use(express.json());
 
 app.get('/health', (_req, res) => {
@@ -27,5 +33,6 @@ app.get('/:slug', async (req: Request<{ slug: string }>, res: Response) => {
 });
 
 app.use('/api/links', linkRouter);
+app.use('/api/auth', authRouter);
 
 app.use(errorHandler);

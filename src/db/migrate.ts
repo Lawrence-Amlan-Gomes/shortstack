@@ -17,4 +17,15 @@ export async function migrate(): Promise<void> {
       clicked_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id            SERIAL PRIMARY KEY,
+      email         VARCHAR(255) NOT NULL,
+      app           VARCHAR(50)  NOT NULL,
+      password_hash TEXT NOT NULL,
+      created_at    TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(email, app)
+    )
+  `);
 }
