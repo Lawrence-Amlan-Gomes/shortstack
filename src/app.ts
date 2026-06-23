@@ -5,6 +5,7 @@ import cors from 'cors';
 import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
+import basicAuth from 'express-basic-auth';
 import { linkRouter } from './routes/links';
 import { authRouter } from './routes/auth';
 import { errorHandler } from './middleware/errorHandler';
@@ -23,7 +24,10 @@ app.use(express.json());
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
 createBullBoard({ queues: [new BullMQAdapter(clickQueue)], serverAdapter });
-app.use('/admin/queues', serverAdapter.getRouter());
+app.use('/admin/queues', basicAuth({
+  users: { [process.env.BULL_BOARD_USER ?? 'admin']: process.env.BULL_BOARD_PASSWORD ?? '' },
+  challenge: true,
+}), serverAdapter.getRouter());
 
 app.use(express.static(path.join(__dirname, '../client/dist')));
 
