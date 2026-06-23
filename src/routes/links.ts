@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db/pool';
+import { redis } from '../redis/client';
 
 export const linkRouter = Router();
 
@@ -24,6 +25,7 @@ linkRouter.post('/', async (req: Request, res: Response) => {
   );
 
   const { slug: savedSlug } = result.rows[0];
+  await redis.set(`slug:${savedSlug}`, url, 'EX', 86400);
   const base = process.env.BASE_URL ?? 'http://localhost:3000';
   res.status(201).json({ slug: savedSlug, short: `${base}/${savedSlug}` });
 });
