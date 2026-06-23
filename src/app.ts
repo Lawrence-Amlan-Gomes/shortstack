@@ -7,6 +7,7 @@ import { authRouter } from './routes/auth';
 import { errorHandler } from './middleware/errorHandler';
 import { pool } from './db/pool';
 import { redis } from './redis/client';
+import { clickQueue } from './queues/clickQueue';
 
 export const app = express();
 
@@ -27,7 +28,7 @@ app.get('/:slug', async (req: Request<{ slug: string }>, res: Response) => {
 
   const cached = await redis.get(`slug:${slug}`);
   if (cached) {
-    await pool.query('INSERT INTO clicks (slug) VALUES ($1)', [slug]);
+    await clickQueue.add('record-click', { slug });
     res.setHeader('X-Cache', 'HIT');
     res.redirect(301, cached);
     return;
@@ -44,7 +45,7 @@ app.get('/:slug', async (req: Request<{ slug: string }>, res: Response) => {
 
   const url = result.rows[0].url;
   await redis.set(`slug:${slug}`, url, 'EX', 86400);
-  await pool.query('INSERT INTO clicks (slug) VALUES ($1)', [slug]);
+  await clickQueue.add('record-click', { slug });
   res.setHeader('X-Cache', 'MISS');
   res.redirect(301, url);
 });
