@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import path from 'path';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { linkRouter } from './routes/links';
@@ -14,6 +15,8 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
+
+app.use(express.static(path.join(__dirname, '../client/dist')));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
