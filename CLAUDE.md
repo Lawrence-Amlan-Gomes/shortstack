@@ -6,7 +6,7 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 
 ## Current Phase
 
-**Session 6 complete** — React frontend live. Vite + React app in `/client`, served by Express as static files at the root URL. Next: BullMQ async click recording.
+**Session 7 complete** — BullMQ async click recording live. Click writes decoupled from redirect path via job queue. Next: Bull Board observability UI.
 
 ## Architecture
 
@@ -25,7 +25,8 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
   - `POST /api/auth/login` — multi-tenant login (email, password, app)
 - **Middleware:** `src/middleware/errorHandler.ts`, `cors`, `express.static`
 - **Database:** PostgreSQL via `pg` pool — `src/db/pool.ts`
-- **Cache:** Redis via `ioredis` — `src/redis/client.ts` (cache-aside on slug lookups, 24h TTL)
+- **Cache:** Redis via `ioredis` — `src/redis/client.ts` (cache-aside on slug lookups, 24h TTL). Also exports `redisConnection` config for BullMQ
+- **Queue:** BullMQ — `src/queues/clickQueue.ts` (producer), `src/workers/clickWorker.ts` (consumer). Click recording async — job enqueued on redirect, worker INSERTs into DB. Worker starts in-process at boot.
 - **Migration:** `src/db/migrate.ts` — runs on boot, creates `links`, `clicks`, `users` tables
 - **Deploy:** Dockerfile (three-stage: client-builder, server-builder, final) → GitHub → Coolify CI/CD → VPS
 - **Live:** https://shortstack.lawrenceamlangomes.com
@@ -59,6 +60,8 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 | React frontend in /client (same repo) | SPA-from-API-server pattern — Express serves built static files, same URL, no CORS, one Coolify deployment | 2026-06-23 |
 | express.static mounted before /:slug | Route order is load-bearing — static must intercept asset requests before the slug wildcard catches them | 2026-06-23 |
 | Three-stage Dockerfile | client-builder and server-builder stages are independent — clean separation, smaller final image | 2026-06-23 |
+| BullMQ async click recording | DB write on redirect path = latency + single point of failure. Queue decouples analytics from redirect — user never waits for DB write | 2026-06-24 |
+| Worker in-process (not separate process) | Simple for now — one Coolify deployment, one process. Separate worker process is the prod-hardened path if queue grows | 2026-06-24 |
 
 ## Skills
 

@@ -126,30 +126,30 @@ The goal isn't to finish fast. It's to finish right and for Lawrence to understa
 
 *(Updated at end of each session. Read this first when @skill_coFounder.md is triggered.)*
 
-**Status:** Session 6 complete.
+**Status:** Session 7 complete.
 
 **Project:** ShortStack — URL shortener with click analytics + shared multi-tenant auth API. Learning vehicle for full backend stack: Express → PostgreSQL → Docker → Redis → BullMQ → Nginx → Kafka → CDN → load balancing → Hostinger VPS deploy via Coolify.
 
 **Live at:** https://shortstack.lawrenceamlangomes.com
 
 **Last completed:**
-- React frontend added at `/client` — Vite + React + TypeScript
-- Single page: URL input → POST /api/links → display short URL + copy button
-- Express serves built static files via `express.static` BEFORE `/:slug` route (order is load-bearing)
-- Three-stage Dockerfile: client-builder, server-builder, final image
-- Dev setup: `npm run dev` (Express) + `npm run dev:client` (Vite on :5173 with /api proxy)
-- Redis installed locally via Homebrew for local dev
-- Deployed and verified working in production
-- Lawrence understands: static file serving, route order importance, multi-stage Docker builds, Vite proxy
+- BullMQ async click recording shipped and deployed
+- `src/queues/clickQueue.ts` — defines BullMQ queue (producer side), `ClickJobData` type
+- `src/workers/clickWorker.ts` — consumer, processes jobs, INSERTs into clicks table
+- `src/redis/client.ts` — added `redisConnection` export (connection config for BullMQ, separate from ioredis instance)
+- `src/app.ts` — replaced both synchronous `INSERT INTO clicks` calls with `clickQueue.add()`
+- `src/index.ts` — `startClickWorker()` called at boot, worker runs in-process
+- Lawrence understands: producer/consumer pattern, why async writes matter, eventual consistency trade-off
 
-**Next action:** BullMQ — async click recording.
-1. Add BullMQ + Redis as queue backend (already have Redis running locally and in Coolify)
-2. On `GET /:slug` redirect — enqueue click job instead of synchronous INSERT
-3. Worker processes queue and writes to `clicks` table
-4. Teach: job queues, producer/consumer pattern, why async writes matter at scale
+**Next action:** Bull Board — queue observability UI.
+1. `npm install @bull-board/express @bull-board/api`
+2. Mount Bull Board at `/admin/queues` (or similar)
+3. Wire `clickQueue` into it
+4. Teach: observability, why seeing queue state matters in production
 
 **Open decisions:**
 - ORM vs raw SQL — staying raw `pg` for now, Drizzle later
+- Worker runs in-process — fine for now, separate worker process is the prod-hardened path
 
 **Technical debt / deferred:**
 - `name` column still exists in DB users table (harmless leftover, can DROP later)
@@ -159,4 +159,4 @@ The goal isn't to finish fast. It's to finish right and for Lawrence to understa
 - No duplicate URL detection
 - `GET /api/links/:slug` in links.ts still hits DB directly (no Redis) — minor, low traffic path
 - No cache invalidation strategy if URL ever needs updating (no update route yet)
-- `client/dist` not in .gitignore — currently committed, should be excluded and built at deploy time only
+- BullMQ retry config not explicitly set — using defaults (3 retries, exponential backoff)
