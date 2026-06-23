@@ -2,6 +2,9 @@ import 'dotenv/config';
 import path from 'path';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import { createBullBoard } from '@bull-board/api';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { ExpressAdapter } from '@bull-board/express';
 import { linkRouter } from './routes/links';
 import { authRouter } from './routes/auth';
 import { errorHandler } from './middleware/errorHandler';
@@ -16,6 +19,11 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
+
+const serverAdapter = new ExpressAdapter();
+serverAdapter.setBasePath('/admin/queues');
+createBullBoard({ queues: [new BullMQAdapter(clickQueue)], serverAdapter });
+app.use('/admin/queues', serverAdapter.getRouter());
 
 app.use(express.static(path.join(__dirname, '../client/dist')));
 
