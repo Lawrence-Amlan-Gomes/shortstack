@@ -6,7 +6,7 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 
 ## Current Phase
 
-**Session 7 complete** — BullMQ async click recording live. Click writes decoupled from redirect path via job queue. Next: Bull Board observability UI.
+**Session 8 complete** — Nginx reverse proxy live. Full request chain: Traefik → Nginx → Express. Bull Board observability UI live at `/admin/queues` with basic auth. Next: local dev portability (`.env.example` + `docker-compose.dev.yml`).
 
 ## Architecture
 
@@ -28,7 +28,10 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 - **Cache:** Redis via `ioredis` — `src/redis/client.ts` (cache-aside on slug lookups, 24h TTL). Also exports `redisConnection` config for BullMQ
 - **Queue:** BullMQ — `src/queues/clickQueue.ts` (producer), `src/workers/clickWorker.ts` (consumer). Click recording async — job enqueued on redirect, worker INSERTs into DB. Worker starts in-process at boot.
 - **Migration:** `src/db/migrate.ts` — runs on boot, creates `links`, `clicks`, `users` tables
-- **Deploy:** Dockerfile (three-stage: client-builder, server-builder, final) → GitHub → Coolify CI/CD → VPS
+- **Observability:** Bull Board at `/admin/queues` — queue UI, protected by `express-basic-auth` (reads `BULL_BOARD_USER` / `BULL_BOARD_PASSWORD` env vars)
+- **Proxy:** Nginx — `nginx/nginx.conf` (conf baked into `nginx/Dockerfile`). Uses Docker resolver `127.0.0.11` + variable upstream for runtime DNS. Sits between Traefik and Express.
+- **Deploy:** `docker-compose.yml` (app + nginx services) → GitHub → Coolify docker-compose buildpack → VPS. App joins `coolify` external network to reach Redis.
+- **Request chain:** Internet → Traefik (SSL, port 443) → Nginx (port 80, internal) → Express (port 3000, internal)
 - **Live:** https://shortstack.lawrenceamlangomes.com
 
 ## Infrastructure
@@ -36,8 +39,8 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 - **VPS:** Hostinger, IP `185.201.8.71`
 - **Coolify:** https://coolify.lawrenceamlangomes.com
 - **Postgres:** Coolify service, port 5432 publicly exposed
-- **Redis:** Coolify service, internal only (not publicly exposed)
-- **Env vars in Coolify:** `DATABASE_URL`, `BASE_URL`, `JWT_SECRET`, `FRONTEND_URL`, `REDIS_URL`
+- **Redis:** Coolify service, on `coolify` Docker network (hostname `p14b0g5b0bem8q55tj3pehgv`)
+- **Env vars in Coolify:** `DATABASE_URL`, `BASE_URL`, `JWT_SECRET`, `FRONTEND_URL`, `REDIS_URL`, `BULL_BOARD_USER`, `BULL_BOARD_PASSWORD`
 
 ## Key Decisions Log
 
@@ -62,6 +65,12 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 | Three-stage Dockerfile | client-builder and server-builder stages are independent — clean separation, smaller final image | 2026-06-23 |
 | BullMQ async click recording | DB write on redirect path = latency + single point of failure. Queue decouples analytics from redirect — user never waits for DB write | 2026-06-24 |
 | Worker in-process (not separate process) | Simple for now — one Coolify deployment, one process. Separate worker process is the prod-hardened path if queue grows | 2026-06-24 |
+| Bull Board basic auth via express-basic-auth | Admin UI must not be publicly accessible — reads BULL_BOARD_USER/PASSWORD from env vars | 2026-06-24 |
+| Nginx conf baked into image (not volume mount) | Volume mounts require file to exist on host first — baking into image is portable, reproducible, no host dependency | 2026-06-24 |
+| expose not ports for nginx | Traefik owns host port 80/443 — nginx must be internal only, reachable via Docker network | 2026-06-24 |
+| App joins coolify Docker network | Redis runs on coolify network — app must join it to resolve Redis hostname | 2026-06-24 |
+| Nginx resolver 127.0.0.11 + variable upstream | Nginx caches DNS at startup — Docker's internal resolver + variable forces runtime resolution, handles container restarts | 2026-06-24 |
+| docker-compose buildpack in Coolify | Enables multi-service deploy (app + nginx) from one repo — Coolify injects env vars, manages networking, adds Traefik labels | 2026-06-24 |
 
 ## Skills
 

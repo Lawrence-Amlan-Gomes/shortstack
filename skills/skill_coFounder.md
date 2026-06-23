@@ -126,32 +126,33 @@ The goal isn't to finish fast. It's to finish right and for Lawrence to understa
 
 *(Updated at end of each session. Read this first when @skill_coFounder.md is triggered.)*
 
-**Status:** Session 7 complete.
+**Status:** Session 8 complete.
 
 **Project:** ShortStack — URL shortener with click analytics + shared multi-tenant auth API. Learning vehicle for full backend stack: Express → PostgreSQL → Docker → Redis → BullMQ → Nginx → Kafka → CDN → load balancing → Hostinger VPS deploy via Coolify.
 
 **Live at:** https://shortstack.lawrenceamlangomes.com
 
 **Last completed:**
-- BullMQ async click recording shipped and deployed
-- `src/queues/clickQueue.ts` — defines BullMQ queue (producer side), `ClickJobData` type
-- `src/workers/clickWorker.ts` — consumer, processes jobs, INSERTs into clicks table
-- `src/redis/client.ts` — added `redisConnection` export (connection config for BullMQ, separate from ioredis instance)
-- `src/app.ts` — replaced both synchronous `INSERT INTO clicks` calls with `clickQueue.add()`
-- `src/index.ts` — `startClickWorker()` called at boot, worker runs in-process
-- Lawrence understands: producer/consumer pattern, why async writes matter, eventual consistency trade-off
+- Bull Board queue observability UI mounted at `/admin/queues`
+- `express-basic-auth` password protection on `/admin/queues` (reads `BULL_BOARD_USER` / `BULL_BOARD_PASSWORD` env vars)
+- Nginx reverse proxy layer added: `nginx/nginx.conf`, `nginx/Dockerfile` (conf baked into image)
+- `docker-compose.yml` updated: `app` + `nginx` services, `coolify` external network for Redis access
+- Full prod deploy via Coolify docker-compose buildpack — Traefik → Nginx → Express chain live
+- Fixed series of prod issues: port 80 clash (expose not ports), volume mount failure (bake conf into image), Redis network isolation (join coolify network), Nginx DNS caching (resolver 127.0.0.11 + variable upstream)
+- Lawrence understands: Nginx as reverse proxy, Docker networking (expose vs ports, external networks, DNS resolution), Traefik label routing, adapter pattern
 
-**Next action:** Bull Board — queue observability UI.
-1. `npm install @bull-board/express @bull-board/api`
-2. Mount Bull Board at `/admin/queues` (or similar)
-3. Wire `clickQueue` into it
-4. Teach: observability, why seeing queue state matters in production
+**Next action:** Local dev portability.
+1. Add `.env.example` — committed file showing all required env vars, no real secrets
+2. Add `docker-compose.dev.yml` — local override with Postgres + Redis services, no external networks
+3. Teach: docker compose -f override pattern, dev vs prod compose split
 
 **Open decisions:**
 - ORM vs raw SQL — staying raw `pg` for now, Drizzle later
 - Worker runs in-process — fine for now, separate worker process is the prod-hardened path
 
 **Technical debt / deferred:**
+- `BULL_BOARD_USER` and `BULL_BOARD_PASSWORD` need to be confirmed set in Coolify env vars
+- `docker-compose.yml` is Coolify-prod-specific — not portable for other machines without dev override
 - `name` column still exists in DB users table (harmless leftover, can DROP later)
 - No token refresh — JWT expires in 7d, no renewal mechanism yet
 - `FRONTEND_URL` env var in Coolify should be set explicitly (currently defaults to `'*'` — too permissive for prod)
