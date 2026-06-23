@@ -6,14 +6,16 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 
 ## Current Phase
 
-**Session 5 complete** — Redis caching layer live. Cache-aside on slug redirects, write-through on create, X-Cache headers for observability. Next: BullMQ async click recording.
+**Session 6 complete** — React frontend live. Vite + React app in `/client`, served by Express as static files at the root URL. Next: BullMQ async click recording.
 
 ## Architecture
 
 - **Runtime:** Node.js + TypeScript
 - **Framework:** Express 5
 - **Entry:** `src/index.ts` (migration → listen) → `src/app.ts` (routes + middleware)
+- **Frontend:** `client/` — Vite + React + TypeScript. Built to `client/dist/`, served by `express.static`. Dev: Vite on `:5173` with `/api` proxy to Express on `:3000`
 - **Routes:**
+  - `GET /` — serves React SPA (via express.static)
   - `GET /health` — server alive check
   - `GET /:slug` — 301 redirect + records click (root level, bit.ly style)
   - `POST /api/links` — create short URL (Zod validated)
@@ -21,11 +23,11 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
   - `GET /api/links/:slug/stats` — click count for a slug
   - `POST /api/auth/register` — multi-tenant register (email, password, app)
   - `POST /api/auth/login` — multi-tenant login (email, password, app)
-- **Middleware:** `src/middleware/errorHandler.ts`, `cors`
+- **Middleware:** `src/middleware/errorHandler.ts`, `cors`, `express.static`
 - **Database:** PostgreSQL via `pg` pool — `src/db/pool.ts`
 - **Cache:** Redis via `ioredis` — `src/redis/client.ts` (cache-aside on slug lookups, 24h TTL)
 - **Migration:** `src/db/migrate.ts` — runs on boot, creates `links`, `clicks`, `users` tables
-- **Deploy:** Dockerfile (multi-stage) → GitHub → Coolify CI/CD → VPS
+- **Deploy:** Dockerfile (three-stage: client-builder, server-builder, final) → GitHub → Coolify CI/CD → VPS
 - **Live:** https://shortstack.lawrenceamlangomes.com
 
 ## Infrastructure
@@ -54,6 +56,9 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 | Write-through on POST /api/links | Cache warm on create — first redirect always HIT, no cold start | 2026-06-23 |
 | 24h TTL on cached slugs | Bounds stale data without being too aggressive — slugs rarely change | 2026-06-23 |
 | X-Cache header for observability | Industry standard (CDN pattern) — easy to verify cache behavior with curl | 2026-06-23 |
+| React frontend in /client (same repo) | SPA-from-API-server pattern — Express serves built static files, same URL, no CORS, one Coolify deployment | 2026-06-23 |
+| express.static mounted before /:slug | Route order is load-bearing — static must intercept asset requests before the slug wildcard catches them | 2026-06-23 |
+| Three-stage Dockerfile | client-builder and server-builder stages are independent — clean separation, smaller final image | 2026-06-23 |
 
 ## Skills
 
