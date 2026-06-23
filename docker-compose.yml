@@ -6,7 +6,7 @@ services:
       - '3000'
     networks:
       - default
-      - p14b0g5b0bem8q55tj3pehgv
+      - coolify
 
   nginx:
     build: ./nginx
@@ -17,5 +17,5 @@ services:
       - app
 
 networks:
-  p14b0g5b0bem8q55tj3pehgv:
+  coolify:
     external: true
