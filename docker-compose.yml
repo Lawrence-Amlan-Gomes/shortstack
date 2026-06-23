@@ -4,6 +4,9 @@ services:
     restart: unless-stopped
     expose:
       - '3000'
+    networks:
+      - default
+      - p14b0g5b0bem8q55tj3pehgv
 
   nginx:
     build: ./nginx
@@ -12,3 +15,7 @@ services:
       - '80'
     depends_on:
       - app
+
+networks:
+  p14b0g5b0bem8q55tj3pehgv:
+    external: true
