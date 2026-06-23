@@ -2,7 +2,7 @@
 
 ## Trigger
 
-User says `@skill_coFounder.md` — activate Co-Founder mode for this session.
+User says `@skills/skill_coFounder.md` — activate Co-Founder mode for this session.
 
 ---
 
@@ -18,7 +18,7 @@ Your dual mandate every session:
 
 ## Session Start Behavior
 
-When `@skill_coFounder.md` is triggered:
+When `@skills/skill_coFounder.md` is triggered:
 
 1. **Read this file top to bottom** — especially the `## Session State` section at the bottom to understand where the last session ended.
 2. **Read `CLAUDE.md`** (if it exists) for project-level context.
@@ -126,38 +126,35 @@ The goal isn't to finish fast. It's to finish right and for Lawrence to understa
 
 *(Updated at end of each session. Read this first when @skill_coFounder.md is triggered.)*
 
-**Status:** Session 2 complete.
+**Status:** Session 5 complete.
 
-**Project:** ShortStack — URL shortener with click analytics. Learning vehicle for full backend stack: Express → PostgreSQL → Docker → Redis → BullMQ → Nginx → Kafka → CDN → load balancing → Hostinger VPS deploy via Coolify.
+**Project:** ShortStack — URL shortener with click analytics + shared multi-tenant auth API. Learning vehicle for full backend stack: Express → PostgreSQL → Docker → Redis → BullMQ → Nginx → Kafka → CDN → load balancing → Hostinger VPS deploy via Coolify.
 
 **Live at:** https://shortstack.lawrenceamlangomes.com
 
 **Last completed:**
-- PostgreSQL connected via `pg` pool (Coolify service on VPS, publicly exposed port 5432)
-- `src/db/pool.ts` — connection pool singleton
-- `src/db/migrate.ts` — creates `links` table on boot (SERIAL, VARCHAR, TEXT, TIMESTAMPTZ)
-- Zod validation on `POST /api/links` — rejects non-URLs
-- Root-level `GET /:slug` redirect added to `app.ts` (bit.ly style)
-- `Dockerfile` — multi-stage build (builder compiles TS, final image ships JS only)
-- `.dockerignore` — keeps image clean
-- `BASE_URL` env var — short URL uses real domain in production
-- GitHub repo created: https://github.com/Lawrence-Amlan-Gomes/shortstack.git
-- CI/CD wired: push to main → Coolify auto-deploys
-- TablePlus connected to VPS Postgres for visual DB inspection
-- Lawrence understands: REST API mental model, connection pooling, parameterized queries, multi-stage Docker, one backend → many frontends
+- Redis service provisioned in Coolify
+- `ioredis` installed, `src/redis/client.ts` singleton created
+- Cache-aside on `GET /:slug` — Redis first, DB on miss, 24h TTL (86400s)
+- Write-through on `POST /api/links` — cache warm on create, first redirect always HIT
+- `X-Cache: HIT/MISS` response header for observability
+- Verified in production: old slug showed MISS → HIT flow; new slug showed HIT immediately
+- Lawrence understands: cache-aside pattern, write-through, TTL, key namespacing, X-Cache observability
 
-**Next action:** Click analytics.
-1. Create `clicks` table: `id, slug, clicked_at` (or add `click_count` to `links` — discuss tradeoffs)
-2. On every `GET /:slug` redirect → INSERT a click record
-3. Add `GET /api/links/:slug/stats` → returns `{ slug, clicks: 42 }`
-4. Teach: aggregate SQL (COUNT, GROUP BY), why analytics go in a separate table
+**Next action:** BullMQ — async click recording.
+1. Add BullMQ + Redis as queue backend (already have Redis running)
+2. On `GET /:slug` redirect — enqueue click job instead of synchronous INSERT
+3. Worker processes queue and writes to `clicks` table
+4. Teach: job queues, producer/consumer pattern, why async writes matter at scale
 
 **Open decisions:**
 - ORM vs raw SQL — staying raw `pg` for now, Drizzle later
-- Separate `clicks` table vs `click_count` column on `links` — recommend separate table (teaches JOINs, time-series data, extensibility)
 
 **Technical debt / deferred:**
-- Slug collision possible — no retry loop if random slug already exists
-- No duplicate URL detection — same long URL can get multiple slugs
-- `GET /:slug` in app.ts and `GET /api/links/:slug` in links.ts duplicate DB query — refactor later
-- No CORS headers — will block frontend teams on different domains (add when connecting a frontend)
+- `name` column still exists in DB users table (harmless leftover, can DROP later)
+- No token refresh — JWT expires in 7d, no renewal mechanism yet
+- `FRONTEND_URL` defaults to `'*'` if not set in Coolify (too permissive for prod — set explicitly)
+- Slug collision possible — no retry loop
+- No duplicate URL detection
+- `GET /api/links/:slug` in links.ts still hits DB directly (no Redis) — minor, low traffic path
+- No cache invalidation strategy if URL ever needs updating (no update route yet)
