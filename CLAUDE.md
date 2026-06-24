@@ -6,7 +6,7 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 
 ## Current Phase
 
-**Session 8 complete** — Nginx reverse proxy live. Full request chain: Traefik → Nginx → Express. Bull Board observability UI live at `/admin/queues` with basic auth. Next: local dev portability (`.env.example` + `docker-compose.dev.yml`).
+**Session 9 complete** — Local dev portability shipped. Repo now fully runnable on any machine with Docker. `.env.example` documents all required env vars. `docker-compose.dev.yml` spins up local Postgres + Redis via compose file layering (`docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build`). Next: add integration tests (supertest + real test DB).
 
 ## Architecture
 

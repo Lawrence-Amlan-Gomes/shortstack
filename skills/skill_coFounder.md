@@ -126,33 +126,32 @@ The goal isn't to finish fast. It's to finish right and for Lawrence to understa
 
 *(Updated at end of each session. Read this first when @skill_coFounder.md is triggered.)*
 
-**Status:** Session 8 complete.
+**Status:** Session 9 complete.
 
 **Project:** ShortStack — URL shortener with click analytics + shared multi-tenant auth API. Learning vehicle for full backend stack: Express → PostgreSQL → Docker → Redis → BullMQ → Nginx → Kafka → CDN → load balancing → Hostinger VPS deploy via Coolify.
 
 **Live at:** https://shortstack.lawrenceamlangomes.com
 
 **Last completed:**
-- Bull Board queue observability UI mounted at `/admin/queues`
-- `express-basic-auth` password protection on `/admin/queues` (reads `BULL_BOARD_USER` / `BULL_BOARD_PASSWORD` env vars)
-- Nginx reverse proxy layer added: `nginx/nginx.conf`, `nginx/Dockerfile` (conf baked into image)
-- `docker-compose.yml` updated: `app` + `nginx` services, `coolify` external network for Redis access
-- Full prod deploy via Coolify docker-compose buildpack — Traefik → Nginx → Express chain live
-- Fixed series of prod issues: port 80 clash (expose not ports), volume mount failure (bake conf into image), Redis network isolation (join coolify network), Nginx DNS caching (resolver 127.0.0.11 + variable upstream)
-- Lawrence understands: Nginx as reverse proxy, Docker networking (expose vs ports, external networks, DNS resolution), Traefik label routing, adapter pattern
+- `.env.example` added — committed template documenting all 8 required env vars, no real secrets
+- `docker-compose.dev.yml` added — local override with Postgres + Redis services, no external network dependency
+- Fixed `.env.example` hostnames: `localhost` → `postgres` / `redis` (Docker service name DNS — inside container, localhost ≠ sibling service)
+- Lawrence understands: compose file layering (`-f` override pattern), dev vs prod split, Docker service name DNS resolution
+- Discussed resume readiness — Node.js + Express can be added. Wrote detailed JobCrackMentor paragraph documenting everything learned across all sessions.
 
-**Next action:** Local dev portability.
-1. Add `.env.example` — committed file showing all required env vars, no real secrets
-2. Add `docker-compose.dev.yml` — local override with Postgres + Redis services, no external networks
-3. Teach: docker compose -f override pattern, dev vs prod compose split
+**Next action:** Add tests.
+1. Integration tests on `POST /api/links` and `GET /:slug` redirect — biggest resume credibility gap
+2. Use `supertest` + a real test DB (not mocks — see technical debt note)
+3. Teach: test setup/teardown, supertest for HTTP testing, why integration > unit for APIs
 
 **Open decisions:**
 - ORM vs raw SQL — staying raw `pg` for now, Drizzle later
 - Worker runs in-process — fine for now, separate worker process is the prod-hardened path
+- Kafka, CDN, load balancing deferred — overkill at current scale, can add as learning exercises later
 
 **Technical debt / deferred:**
+- No tests — biggest gap before resume claim is bulletproof
 - `BULL_BOARD_USER` and `BULL_BOARD_PASSWORD` need to be confirmed set in Coolify env vars
-- `docker-compose.yml` is Coolify-prod-specific — not portable for other machines without dev override
 - `name` column still exists in DB users table (harmless leftover, can DROP later)
 - No token refresh — JWT expires in 7d, no renewal mechanism yet
 - `FRONTEND_URL` env var in Coolify should be set explicitly (currently defaults to `'*'` — too permissive for prod)
