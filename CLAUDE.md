@@ -6,7 +6,7 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 
 ## Current Phase
 
-**Session 9 complete** — Local dev portability shipped. Repo now fully runnable on any machine with Docker. `.env.example` documents all required env vars. `docker-compose.dev.yml` spins up local Postgres + Redis via compose file layering (`docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build`). Next: add integration tests (supertest + real test DB).
+**Session 12 complete** — DB indexes, rate limiting, and security hardening shipped. Indexes on `links.slug` and `clicks.slug` live in Coolify Postgres. Rate limiting via `express-rate-limit` (10 req/min on POST /api/links, /auth/register, /auth/login). Helmet security headers on all responses. FRONTEND_URL set explicitly in Coolify. Next: token refresh (short-lived access tokens + long-lived refresh tokens).
 
 ## Architecture
 
@@ -71,6 +71,10 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 | App joins coolify Docker network | Redis runs on coolify network — app must join it to resolve Redis hostname | 2026-06-24 |
 | Nginx resolver 127.0.0.11 + variable upstream | Nginx caches DNS at startup — Docker's internal resolver + variable forces runtime resolution, handles container restarts | 2026-06-24 |
 | docker-compose buildpack in Coolify | Enables multi-service deploy (app + nginx) from one repo — Coolify injects env vars, manages networking, adds Traefik labels | 2026-06-24 |
+| DB indexes on links.slug and clicks.slug | Every redirect hits links WHERE slug — full table scan at scale is O(n). B-tree index makes it O(log n) | 2026-06-28 |
+| Rate limiting via express-rate-limit | 10 req/min per IP on POST /api/links, /auth/register, /auth/login — prevents DB flooding and brute force | 2026-06-28 |
+| Helmet for security headers | Sets X-Frame-Options, CSP, HSTS, nosniff and removes X-Powered-By in one line | 2026-06-28 |
+| FRONTEND_URL set explicitly in Coolify | Was defaulting to '*' — too permissive for prod. Now locked to https://separate-frontend-one.vercel.app | 2026-06-28 |
 
 ## Skills
 

@@ -122,41 +122,78 @@ The goal isn't to finish fast. It's to finish right and for Lawrence to understa
 
 ---
 
+## Teaching Style — Follow This Exactly
+
+Lawrence confirmed this works. Do not deviate.
+
+### When Lawrence already knows something
+1. **Ask him to explain it first** — "what do you think this does?" or "what are the steps?" before any code
+2. **One line at a time** — give one piece, he types it, then move to the next. Never a full solution at once
+3. **He writes the code himself** — you guide, he types. Never paste the full answer
+4. **Run it and see what breaks** — when something fails, ask "why do you think that happened?" before explaining
+5. **Short explanations** — explain one concept, check he understood it, then move on
+
+### When it's something new
+1. **One sentence: what it is** — just the core idea, no history, no alternatives yet
+2. **Why he needs it** — connect it to a problem already in his code
+3. **Tiny example** — simplest possible version, not the real code yet
+4. **Build it in his real code together** — one line at a time, him typing
+
+### What does NOT work
+- Dumping multiple files or a lot of code at once
+- Explaining everything before doing anything
+- Moving to the next concept before he understood the current one
+- Giving the full solution upfront
+
+---
+
 ## Session State
 
 *(Updated at end of each session. Read this first when @skill_coFounder.md is triggered.)*
 
-**Status:** Session 9 complete.
+**Status:** Session 12 complete (DB indexes + rate limiting + helmet shipped).
 
 **Project:** ShortStack — URL shortener with click analytics + shared multi-tenant auth API. Learning vehicle for full backend stack: Express → PostgreSQL → Docker → Redis → BullMQ → Nginx → Kafka → CDN → load balancing → Hostinger VPS deploy via Coolify.
 
 **Live at:** https://shortstack.lawrenceamlangomes.com
 
 **Last completed:**
-- `.env.example` added — committed template documenting all 8 required env vars, no real secrets
-- `docker-compose.dev.yml` added — local override with Postgres + Redis services, no external network dependency
-- Fixed `.env.example` hostnames: `localhost` → `postgres` / `redis` (Docker service name DNS — inside container, localhost ≠ sibling service)
-- Lawrence understands: compose file layering (`-f` override pattern), dev vs prod split, Docker service name DNS resolution
-- Discussed resume readiness — Node.js + Express can be added. Wrote detailed JobCrackMentor paragraph documenting everything learned across all sessions.
+- DB indexes on `links.slug` and `clicks.slug` — live in Coolify Postgres via migrate.ts
+- Taught EXPLAIN ANALYZE — showed seq scan vs index scan, 10x speed difference proven
+- Rate limiting via `express-rate-limit` — 10 req/min on POST /api/links, /auth/register, /auth/login
+- Helmet security headers on all responses — X-Frame-Options, CSP, HSTS, nosniff, etc.
+- FRONTEND_URL set explicitly in Coolify to https://separate-frontend-one.vercel.app (no more wildcard CORS in prod)
 
-**Next action:** Add tests.
-1. Integration tests on `POST /api/links` and `GET /:slug` redirect — biggest resume credibility gap
-2. Use `supertest` + a real test DB (not mocks — see technical debt note)
-3. Teach: test setup/teardown, supertest for HTTP testing, why integration > unit for APIs
+**Teaching notes (for next session):**
+- Lawrence confirmed: explain first, then ask if he understands, then proceed — do NOT ask him to guess/type first
+- He now understands: indexes, B-tree, EXPLAIN ANALYZE, rate limiting, HTTP security headers
+- Step by step, one concept at a time — never dump finished code
+
+**Next action:** Token refresh.
+1. Explain short-lived access tokens (15min) vs long-lived refresh tokens
+2. Add `refresh_tokens` table to DB via migrate.ts
+3. New `POST /api/auth/refresh` route
+4. Update login to issue both tokens
 
 **Open decisions:**
 - ORM vs raw SQL — staying raw `pg` for now, Drizzle later
 - Worker runs in-process — fine for now, separate worker process is the prod-hardened path
-- Kafka, CDN, load balancing deferred — overkill at current scale, can add as learning exercises later
+- Kafka, CDN, load balancing deferred — overkill at current scale, add as learning exercises later
 
 **Technical debt / deferred:**
-- No tests — biggest gap before resume claim is bulletproof
+- Click count test (1 click after visit) — untestable cleanly until worker is in separate process
+- ts-jest deprecation warning (globals config) — minor, doesn't affect test runs
 - `BULL_BOARD_USER` and `BULL_BOARD_PASSWORD` need to be confirmed set in Coolify env vars
 - `name` column still exists in DB users table (harmless leftover, can DROP later)
-- No token refresh — JWT expires in 7d, no renewal mechanism yet
-- `FRONTEND_URL` env var in Coolify should be set explicitly (currently defaults to `'*'` — too permissive for prod)
+- No token refresh — JWT expires in 7d, no renewal mechanism yet (next session)
 - Slug collision possible — no retry loop
 - No duplicate URL detection
 - `GET /api/links/:slug` in links.ts still hits DB directly (no Redis) — minor, low traffic path
 - No cache invalidation strategy if URL ever needs updating (no update route yet)
 - BullMQ retry config not explicitly set — using defaults (3 retries, exponential backoff)
+
+**Quality checklist remaining:**
+- [x] DB indexes
+- [x] Rate limiting
+- [x] Security hardening (helmet, CORS tightening)
+- [ ] Token refresh

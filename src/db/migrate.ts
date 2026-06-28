@@ -1,4 +1,4 @@
-import { pool } from './pool';
+import { pool } from "./pool";
 
 export async function migrate(): Promise<void> {
   await pool.query(`
@@ -37,7 +37,9 @@ export async function migrate(): Promise<void> {
   await pool.query(`ALTER TABLE users DROP COLUMN IF EXISTS name`);
 
   // Drop old email-only unique constraint if it exists, replace with (email, app)
-  await pool.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key`);
+  await pool.query(
+    `ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key`,
+  );
   await pool.query(`
     DO $$ BEGIN
       IF NOT EXISTS (
@@ -47,4 +49,10 @@ export async function migrate(): Promise<void> {
       END IF;
     END $$
   `);
+  await pool.query(`
+  CREATE INDEX IF NOT EXISTS idx_links_slug ON links(slug);
+`);
+  await pool.query(`
+  CREATE INDEX IF NOT EXISTS idx_clicks_slug ON clicks(slug);
+`);
 }
