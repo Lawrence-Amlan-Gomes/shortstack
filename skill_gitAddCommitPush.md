@@ -2,7 +2,7 @@
 
 ## Trigger
 
-User says `@skills/skill_gitAddCommitPush.md` or `skill_gitAddCommitPush.md`, or any equivalent that means: run the build check, fix errors, then commit and push.
+User says `@skill_gitAddCommitPush.md` or `skill_gitAddCommitPush.md`, or any equivalent that means: run the build check, fix errors, then commit and push.
 
 ## What it means
 

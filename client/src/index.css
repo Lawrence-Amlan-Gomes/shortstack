@@ -1,120 +1,124 @@
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* This is the index.css file. What this file does is style the whole ShortStack frontend:
+   page layout, the shorten-URL form, and the result box that shows the finished short
+   link. Plain CSS, no framework — class names are matched by App.tsx. */
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f5f5f5;
-  color: #111;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+*, *::before, *::after { /* Apply this to every element, and the invisible ::before/::after decorations every element can have */
+  box-sizing: border-box; /* Make width/height include padding and border, so sizes are predictable */
+  margin: 0; /* Remove the browser's default outside spacing */
+  padding: 0; /* Remove the browser's default inside spacing */
+} /* End of the global reset */
 
-.container {
-  width: 100%;
-  max-width: 560px;
-  padding: 2rem 1.5rem;
-}
+body { /* Style the whole page background */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; /* Use the device's normal system font */
+  background: #f5f5f5; /* Light grey page background */
+  color: #111; /* Near-black text color */
+  min-height: 100vh; /* Make the body at least as tall as the full browser window */
+  display: flex; /* Turn the body into a flex container, so we can center its contents */
+  align-items: center; /* Center the content vertically */
+  justify-content: center; /* Center the content horizontally */
+} /* End of the body styling */
 
-h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  margin-bottom: 0.25rem;
-}
+.container { /* The centered card that holds the whole app */
+  width: 100%; /* Take up all available width, up to the max-width below */
+  max-width: 560px; /* Never grow wider than this, so it stays readable on big screens */
+  padding: 2rem 1.5rem; /* Space inside the container, top/bottom then left/right */
+} /* End of the container styling */
 
-.subtitle {
-  color: #666;
-  margin-bottom: 2rem;
-  font-size: 0.95rem;
-}
+h1 { /* Style every top-level heading (the "ShortStack" title) */
+  font-size: 2rem; /* Big text */
+  font-weight: 700; /* Bold */
+  letter-spacing: -0.5px; /* Slightly tighter spacing between letters, for a denser look */
+  margin-bottom: 0.25rem; /* Small gap below the title */
+} /* End of the heading styling */
 
-.form {
-  display: flex;
-  gap: 0.5rem;
-}
+.subtitle { /* Style the smaller descriptive line under the title */
+  color: #666; /* Medium grey, less prominent than the main text */
+  margin-bottom: 2rem; /* Gap below before the next element */
+  font-size: 0.95rem; /* Slightly smaller than normal text */
+} /* End of the subtitle styling */
 
-.input {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  font-size: 0.95rem;
-  border: 1.5px solid #ddd;
-  border-radius: 8px;
-  outline: none;
-  transition: border-color 0.15s;
-  background: #fff;
-}
+.form { /* Style the row that holds an input box and its submit button */
+  display: flex; /* Lay the input and button out side by side */
+  gap: 0.5rem; /* Small gap between them */
+} /* End of the form-row styling */
 
-.input:focus {
-  border-color: #111;
-}
+.input { /* Style every text input box in the app */
+  flex: 1; /* Let the input grow to fill any extra space in its row */
+  padding: 0.75rem 1rem; /* Space inside the box, top/bottom then left/right */
+  font-size: 0.95rem; /* Slightly smaller than normal text */
+  border: 1.5px solid #ddd; /* A thin, light grey border */
+  border-radius: 8px; /* Rounded corners */
+  outline: none; /* Remove the browser's default focus outline, since we style focus ourselves below */
+  transition: border-color 0.15s; /* Animate border color changes smoothly instead of snapping instantly */
+  background: #fff; /* White background */
+} /* End of the input styling */
 
-.btn {
-  padding: 0.75rem 1.25rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: opacity 0.15s;
-  white-space: nowrap;
-}
+.input:focus { /* Style an input while the user is actively typing in it */
+  border-color: #111; /* Darken the border to near-black, showing it's focused */
+} /* End of the input-focus styling */
 
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+.btn { /* Style every button in the app */
+  padding: 0.75rem 1.25rem; /* Space inside the button, top/bottom then left/right */
+  font-size: 0.95rem; /* Slightly smaller than normal text */
+  font-weight: 600; /* Semi-bold, so button text stands out */
+  border: none; /* No border by default */
+  border-radius: 8px; /* Rounded corners */
+  cursor: pointer; /* Show a hand cursor on hover, signaling it's clickable */
+  transition: opacity 0.15s; /* Animate opacity changes smoothly instead of snapping instantly */
+  white-space: nowrap; /* Never let the button's text wrap onto a second line */
+} /* End of the button styling */
 
-.btn-primary {
-  background: #111;
-  color: #fff;
-}
+.btn:disabled { /* Style any button while it's disabled (e.g. during a loading state) */
+  opacity: 0.5; /* Fade it out, showing it's not clickable right now */
+  cursor: not-allowed; /* Show the "blocked" cursor on hover */
+} /* End of the disabled-button styling */
 
-.btn-primary:hover:not(:disabled) {
-  opacity: 0.8;
-}
+.btn-primary { /* An extra class for the main action buttons (Shorten, Log in, Create account) */
+  background: #111; /* Near-black background */
+  color: #fff; /* White text */
+} /* End of the primary-button styling */
 
-.btn-copy {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
+.btn-primary:hover:not(:disabled) { /* When hovering a primary button that ISN'T disabled */
+  opacity: 0.8; /* Slightly fade it, giving hover feedback */
+} /* End of the primary-button hover styling */
 
-.btn-copy:hover {
-  opacity: 0.8;
-}
+.btn-copy { /* An extra class for the "Copy" button next to the finished short link */
+  background: #e8f5e9; /* Very light green background */
+  color: #2e7d32; /* Darker green text, matching the "success" feeling of copying */
+} /* End of the copy-button styling */
 
-.error {
-  margin-top: 1rem;
-  color: #c62828;
-  font-size: 0.9rem;
-}
+.btn-copy:hover { /* When hovering the copy button */
+  opacity: 0.8; /* Slightly fade it, giving hover feedback */
+} /* End of the copy-button hover styling */
 
-.result {
-  margin-top: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: #fff;
-  border: 1.5px solid #ddd;
-  border-radius: 8px;
-  padding: 0.875rem 1rem;
-}
+.error { /* Style any error message paragraph */
+  margin-top: 1rem; /* Gap above, separating it from the form */
+  color: #c62828; /* Red text, signaling something went wrong */
+  font-size: 0.9rem; /* Slightly smaller than normal text */
+} /* End of the error styling */
 
-.short-url {
-  flex: 1;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #111;
-  text-decoration: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.result { /* Style the box that shows the finished short link */
+  margin-top: 1.5rem; /* Gap above, separating it from the form */
+  display: flex; /* Lay the link and copy button out side by side */
+  align-items: center; /* Vertically center them relative to each other */
+  gap: 0.75rem; /* Small gap between the link and the button */
+  background: #fff; /* White background, making it stand out from the page's grey */
+  border: 1.5px solid #ddd; /* A thin, light grey border */
+  border-radius: 8px; /* Rounded corners */
+  padding: 0.875rem 1rem; /* Space inside the box, top/bottom then left/right */
+} /* End of the result-box styling */
 
-.short-url:hover {
-  text-decoration: underline;
-}
+.short-url { /* Style the short link text/link itself, inside the result box */
+  flex: 1; /* Let it grow to fill any extra space, pushing the copy button to the right */
+  font-size: 1rem; /* Normal text size */
+  font-weight: 500; /* Slightly bolder than normal, so it reads as important */
+  color: #111; /* Near-black text */
+  text-decoration: none; /* Remove the browser's default underline for links */
+  overflow: hidden; /* Hide any part of the text that doesn't fit */
+  text-overflow: ellipsis; /* Show "..." if the text had to be cut off */
+  white-space: nowrap; /* Never let the link text wrap onto a second line */
+} /* End of the short-url styling */
+
+.short-url:hover { /* When hovering the short link */
+  text-decoration: underline; /* Show an underline, signaling it's clickable */
+} /* End of the short-url hover styling */
