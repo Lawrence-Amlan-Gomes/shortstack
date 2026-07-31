@@ -6,28 +6,29 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 
 ## Current Phase
 
-**Session 12 complete** — DB indexes, rate limiting, and security hardening shipped. Indexes on `links.slug` and `clicks.slug` live in Coolify Postgres. Rate limiting via `express-rate-limit` (10 req/min on POST /api/links, /auth/register, /auth/login). Helmet security headers on all responses. FRONTEND_URL set explicitly in Coolify. Next: token refresh (short-lived access tokens + long-lived refresh tokens).
+**Session 13 complete** — multi-tenant auth is now actually enforced (was fake: JWTs issued but never verified, no `user_id` on links). Link creation stays anonymous-allowed by design (matches the live site's original UX) but attaches the real owner when a valid token is present. Five real bugs found and fixed along the way (slug collisions, duplicated redirect logic, silent JWT_SECRET fallback, an untested BullMQ click pipeline, test-cleanup ordering). Full Jest + Supertest suite added (17 tests, real Postgres/Redis, no mocks). Every file now has plain-English comments (top-of-file summary + per-line). Pushed to `main`, Coolify redeploying. Next: token refresh (short-lived access tokens + long-lived refresh tokens) for the register/login endpoints, which exist and work but aren't used by the frontend yet.
 
 ## Architecture
 
 - **Runtime:** Node.js + TypeScript
 - **Framework:** Express 5
 - **Entry:** `src/index.ts` (migration → listen) → `src/app.ts` (routes + middleware)
-- **Frontend:** `client/` — Vite + React + TypeScript. Built to `client/dist/`, served by `express.static`. Dev: Vite on `:5173` with `/api` proxy to Express on `:3000`
+- **Frontend:** `client/` — Vite + React + TypeScript. Built to `client/dist/`, served by `express.static`. No login screen — anonymous shorten form only. Local dev default: single-port, build the client (`npm run build` in `client/`) and let Express serve it, same as production. Vite dev on `:5173` with `/api` proxy is still available for hot-reload frontend iteration (proxy target in `client/vite.config.ts` is hardcoded to `:3000` — update it locally if the API is running on a different port)
 - **Routes:**
   - `GET /` — serves React SPA (via express.static)
   - `GET /health` — server alive check
-  - `GET /:slug` — 301 redirect + records click (root level, bit.ly style)
-  - `POST /api/links` — create short URL (Zod validated)
-  - `GET /api/links/:slug` — redirect (via linkRouter)
+  - `GET /:slug` — 301 redirect + records click (root level, bit.ly style) — shares `resolveSlug()` in `src/routes/links.ts` with the route below, one cache-aside implementation, not two
+  - `POST /api/links` — create short URL (Zod validated). Login is optional (`optionalAuthenticate`) — anonymous creation allowed (`user_id` null), attaches the real owner if a valid `Bearer` token is present. Retries on slug collision (Postgres `23505`) up to 5 times
+  - `GET /api/links/:slug` — redirect (via linkRouter), same shared `resolveSlug()`
   - `GET /api/links/:slug/stats` — click count for a slug
-  - `POST /api/auth/register` — multi-tenant register (email, password, app)
-  - `POST /api/auth/login` — multi-tenant login (email, password, app)
-- **Middleware:** `src/middleware/errorHandler.ts`, `cors`, `express.static`
+  - `POST /api/auth/register` — multi-tenant register (email, password, app). Exists and works; not called by the frontend yet (no login UI)
+  - `POST /api/auth/login` — multi-tenant login (email, password, app). Same as above
+- **Middleware:** `src/middleware/errorHandler.ts`, `src/middleware/authenticate.ts` (`authenticate` — strict, 401 on missing/invalid token, currently unused by any route; `optionalAuthenticate` — never blocks, used by `POST /api/links`), `cors`, `express.static`
 - **Database:** PostgreSQL via `pg` pool — `src/db/pool.ts`
 - **Cache:** Redis via `ioredis` — `src/redis/client.ts` (cache-aside on slug lookups, 24h TTL). Also exports `redisConnection` config for BullMQ
 - **Queue:** BullMQ — `src/queues/clickQueue.ts` (producer), `src/workers/clickWorker.ts` (consumer). Click recording async — job enqueued on redirect, worker INSERTs into DB. Worker starts in-process at boot.
-- **Migration:** `src/db/migrate.ts` — runs on boot, creates `links`, `clicks`, `users` tables
+- **Migration:** `src/db/migrate.ts` — runs on boot, creates `links`, `clicks`, `users` tables. `links.user_id` (nullable, `REFERENCES users(id)`) added Session 13
+- **Testing:** `src/tests/links.test.ts` — Jest + Supertest against a real Postgres test DB and real Redis (not mocked), including the BullMQ worker actually running so click recording is verified end-to-end, not just the enqueue side. `npm test` (needs `.env.test`, see `.env.test.example`; `npm run test:setup` creates the test DB once)
 - **Observability:** Bull Board at `/admin/queues` — queue UI, protected by `express-basic-auth` (reads `BULL_BOARD_USER` / `BULL_BOARD_PASSWORD` env vars)
 - **Proxy:** Nginx — `nginx/nginx.conf` (conf baked into `nginx/Dockerfile`). Uses Docker resolver `127.0.0.11` + variable upstream for runtime DNS. Sits between Traefik and Express.
 - **Deploy:** `docker-compose.yml` (app + nginx services) → GitHub → Coolify docker-compose buildpack → VPS. App joins `coolify` external network to reach Redis.
@@ -75,13 +76,22 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 | Rate limiting via express-rate-limit | 10 req/min per IP on POST /api/links, /auth/register, /auth/login — prevents DB flooding and brute force | 2026-06-28 |
 | Helmet for security headers | Sets X-Frame-Options, CSP, HSTS, nosniff and removes X-Powered-By in one line | 2026-06-28 |
 | FRONTEND_URL set explicitly in Coolify | Was defaulting to '*' — too permissive for prod. Now locked to https://separate-frontend-one.vercel.app | 2026-06-28 |
+| Login optional on link creation, not mandatory | Matches the live site's original UX — anyone can shorten a URL. `optionalAuthenticate` attaches an owner if a valid token is present, never blocks. Considered making auth mandatory first (built a full frontend login screen) but reverted — requiring login would have broken the only user-facing feature with no user warning | 2026-07-23 |
+| Strict `authenticate` middleware kept but unused | Written for the mandatory-auth path before the reversal above. Left in place for a future route that should genuinely require login (e.g. "my links"), rather than deleted | 2026-07-23 |
+| `resolveSlug()` unified in links.ts | Root `/:slug` and `/api/links/:slug` had silently diverged — one had caching + click tracking, the other didn't. One implementation now, shared by both | 2026-07-23 |
+| JWT_SECRET fail-fast, no silent fallback | Previously defaulted to a hardcoded `'dev-secret'` if unset — a prod misconfiguration would fail silently into an insecure default. Now the app refuses to boot without it | 2026-07-23 |
+| Real integration test suite (Jest + Supertest, real Postgres/Redis) | Mocked tests can pass while the real thing is broken — this project's whole click-recording pipeline had exactly that gap (enqueue tested, worker never run in tests) until this session | 2026-07-23 |
+| Every source file gets plain-English comments | Lawrence is not a native English speaker and wants to be able to read any file back later and understand it line by line — top-of-file summary plus a comment on every code line. Full spec in `skill_coFounder.md` | 2026-07-23 |
+| Local dev defaults to single-port (Express serves built client) | Matches production's serving model exactly, avoids proxy/port-mismatch bugs (one already happened: Vite's proxy pointed at the wrong port and silently hit a different local project). Vite dev server still available when hot-reload frontend iteration is specifically wanted | 2026-07-23 |
 
 ## Skills
 
 | Skill | Trigger | Purpose |
 |---|---|---|
-| `skills/skill_coFounder.md` | `@skill_coFounder.md` | Co-founder + senior mentor. Reads session state, briefs on progress, teaches while building. Say `End Today` to save session and update this file. |
-| `skills/skill_gitAddCommitPush.md` | `@skills/skill_gitAddCommitPush.md` | Run build check, fix errors, commit, push to main. |
+| `skill_coFounder.md` | `@skill_coFounder.md` | Co-founder + senior mentor. Reads `co-founder/session-state.md`, briefs on progress, teaches while building. Say `End Today` to save session and update this file. Also defines the cross-project `Start Chat`/`End Chat` relay, the local dev-server start/stop rule, and the code comment convention. |
+| `skill_gitAddCommitPush.md` | `@skill_gitAddCommitPush.md` | Run build check, fix errors, commit, push to main. |
+
+`co-founder/` at the repo root is Claude's private working-notes folder (not for Lawrence) — `co-founder/index.md` lists what's in it, `co-founder/session-state.md` is the actual session log `skill_coFounder.md` reads/writes each session.
 
 ## Do Not Touch
 

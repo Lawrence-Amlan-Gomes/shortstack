@@ -1,6 +1,6 @@
 // This is the migrate.ts file. What this file does is set up the database structure —
-// it creates the tables (links, clicks, users) and updates them if something changed
-// since the last time the app started. It runs once, every time the server boots up.
+// it creates the tables (links, clicks, users, refresh_tokens) and updates them if something
+// changed since the last time the app started. It runs once, every time the server boots up.
 //
 // Note on comments below: the SQL text lives inside backtick strings (template literals).
 // JavaScript's `//` comment does NOT work inside those strings — it would become literal
@@ -82,5 +82,24 @@ export async function migrate(): Promise<void> { // Start a function named 'migr
   await pool.query(`
     -- Build a fast lookup shortcut (an index) on the 'slug' column of 'clicks', only if it does not exist yet, so searching by slug is quick
     CREATE INDEX IF NOT EXISTS idx_clicks_slug ON clicks(slug);
+  `);
+
+  // Send this command to the database and wait for it to finish
+  await pool.query(`
+    -- Create a new table named 'refresh_tokens' only if it does not exist yet — each row is one long-lived login session
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      id         SERIAL PRIMARY KEY, -- Create an 'id' column that counts up automatically and acts as a unique ID
+      user_id    INTEGER NOT NULL REFERENCES users(id), -- Create a 'user_id' column connecting this token to the user it belongs to
+      token_hash TEXT NOT NULL, -- Create a 'token_hash' column storing a scrambled version of the token, never the real token itself
+      expires_at TIMESTAMPTZ NOT NULL, -- Create an 'expires_at' column saying exactly when this token stops working
+      revoked_at TIMESTAMPTZ, -- Create a 'revoked_at' column, empty until the token is used up (rotated) or manually cancelled
+      created_at TIMESTAMPTZ DEFAULT NOW() -- Create a 'created_at' column that saves the exact time the row was made, automatically
+    ) -- End of the table design
+  `);
+
+  // Send this command to the database and wait for it to finish
+  await pool.query(`
+    -- Build a fast lookup shortcut (an index) on 'token_hash' in 'refresh_tokens', only if it does not exist yet, so checking a refresh token is quick
+    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
   `);
 } // End of the migrate function

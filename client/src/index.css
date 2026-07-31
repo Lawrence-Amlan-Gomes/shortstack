@@ -12,11 +12,14 @@ body { /* Style the whole page background */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; /* Use the device's normal system font */
   background: #f5f5f5; /* Light grey page background */
   color: #111; /* Near-black text color */
-  min-height: 100vh; /* Make the body at least as tall as the full browser window */
-  display: flex; /* Turn the body into a flex container, so we can center its contents */
+} /* End of the body styling — no longer flex-centers everything, since the page now has two stacked sections instead of one box */
+
+.hero { /* The first section: the shorten-URL screen, full browser height */
+  min-height: 100vh; /* Make this section at least as tall as the full browser window */
+  display: flex; /* Turn it into a flex container, so we can center the form inside it */
   align-items: center; /* Center the content vertically */
   justify-content: center; /* Center the content horizontally */
-} /* End of the body styling */
+} /* End of the hero-section styling */
 
 .container { /* The centered card that holds the whole app */
   width: 100%; /* Take up all available width, up to the max-width below */
@@ -122,3 +125,28 @@ h1 { /* Style every top-level heading (the "ShortStack" title) */
 .short-url:hover { /* When hovering the short link */
   text-decoration: underline; /* Show an underline, signaling it's clickable */
 } /* End of the short-url hover styling */
+
+.architecture { /* The second section: shows the system architecture diagram below the hero */
+  min-height: 100vh; /* Make this section exactly as tall as the browser window too, matching the hero above */
+  display: flex; /* Turn it into a flex container, so we can center its contents */
+  flex-direction: column; /* Stack the heading above the image instead of side by side */
+  align-items: center; /* Center everything horizontally */
+  justify-content: center; /* Center everything vertically */
+  padding: 4rem 1.5rem; /* Space around the section's contents, top/bottom then left/right */
+  text-align: center; /* Center the heading text */
+  background: #fff; /* White background, visually separating this section from the grey hero above */
+} /* End of the architecture-section styling */
+
+.architecture-title { /* Style the "System Architecture" heading */
+  font-size: 1.5rem; /* Medium-large text */
+  font-weight: 700; /* Bold */
+  margin-bottom: 2rem; /* Gap below before the image */
+} /* End of the architecture-title styling */
+
+.architecture-img { /* Style the diagram image itself */
+  max-width: 100%; /* Never overflow the screen width, shrink on small screens */
+  width: 1100px; /* Preferred width on large screens, so the diagram stays readable */
+  max-height: 65vh; /* Never overflow the section's height either, so it still fits within one screen alongside the heading */
+  object-fit: contain; /* Shrink proportionally instead of stretching or cropping when max-height kicks in */
+  border-radius: 12px; /* Rounded corners, matching the app's soft-corner style */
+} /* End of the architecture-img styling */

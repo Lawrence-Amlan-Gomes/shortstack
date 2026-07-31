@@ -41,36 +41,49 @@ export default function App() { // Define the main App component, the one thing 
   } // End of the handleCopy function
 
   return ( // Build what gets shown on screen
-    <main className="container"> {/* The centered page wrapper */}
-      <h1>ShortStack</h1> {/* The site title */}
-      <p className="subtitle">Paste a long URL, get a short one.</p> {/* Instructions for the form */}
+    <> {/* A fragment, since we now have two full sections stacked instead of one box */}
+      <section className="hero"> {/* The first screen: takes up the full browser height, centers the shorten form */}
+        <main className="container"> {/* The centered page wrapper */}
+          <h1>ShortStack</h1> {/* The site title */}
+          <p className="subtitle">Paste a long URL, get a short one.</p> {/* Instructions for the form */}
 
-      <form onSubmit={handleSubmit} className="form"> {/* The shorten-URL form */}
-        <input // The URL input box
-          type="url" // Only accept text shaped like a web address
-          value={url} // Show whatever is currently typed
-          onChange={e => setUrl(e.target.value)} // Update our remembered value whenever the user types
-          placeholder="https://example.com/very/long/url" // Grey hint text shown when empty
-          required // The browser won't submit the form if this is empty
-          className="input" // Reuse the app's input styling
+          <form onSubmit={handleSubmit} className="form"> {/* The shorten-URL form */}
+            <input // The URL input box
+              type="url" // Only accept text shaped like a web address
+              value={url} // Show whatever is currently typed
+              onChange={e => setUrl(e.target.value)} // Update our remembered value whenever the user types
+              placeholder="https://example.com/very/long/url" // Grey hint text shown when empty
+              required // The browser won't submit the form if this is empty
+              className="input" // Reuse the app's input styling
+            />
+            <button type="submit" disabled={loading} className="btn btn-primary"> {/* The submit button, disabled while a request is in flight */}
+              {loading ? 'Shortening...' : 'Shorten'} {/* Button text changes based on loading state */}
+            </button>
+          </form>
+
+          {error && <p className="error">{error}</p>} {/* Only show the error paragraph if there is an error message */}
+
+          {shortUrl && ( // Only show the result box if we actually have a short URL
+            <div className="result"> {/* The box showing the finished short link */}
+              <a href={shortUrl} target="_blank" rel="noreferrer" className="short-url"> {/* The short link itself, opens in a new tab */}
+                {shortUrl}
+              </a>
+              <button onClick={handleCopy} className="btn btn-copy"> {/* The copy-to-clipboard button */}
+                {copied ? 'Copied!' : 'Copy'} {/* Button text changes briefly after copying */}
+              </button>
+            </div>
+          )}
+        </main>
+      </section>
+
+      <section className="architecture"> {/* The second screen: shows the system architecture diagram below the fold */}
+        <h2 className="architecture-title">System Architecture</h2> {/* Heading for the diagram section */}
+        <img // The architecture diagram image itself
+          src="/system-architecture-diagram.png" // Served from client/public, so this path works in both dev and production
+          alt="ShortStack system architecture diagram" // Text shown if the image fails to load, and read by screen readers
+          className="architecture-img" // Styling for the image (max width, rounded corners, centered)
         />
-        <button type="submit" disabled={loading} className="btn btn-primary"> {/* The submit button, disabled while a request is in flight */}
-          {loading ? 'Shortening...' : 'Shorten'} {/* Button text changes based on loading state */}
-        </button>
-      </form>
-
-      {error && <p className="error">{error}</p>} {/* Only show the error paragraph if there is an error message */}
-
-      {shortUrl && ( // Only show the result box if we actually have a short URL
-        <div className="result"> {/* The box showing the finished short link */}
-          <a href={shortUrl} target="_blank" rel="noreferrer" className="short-url"> {/* The short link itself, opens in a new tab */}
-            {shortUrl}
-          </a>
-          <button onClick={handleCopy} className="btn btn-copy"> {/* The copy-to-clipboard button */}
-            {copied ? 'Copied!' : 'Copy'} {/* Button text changes briefly after copying */}
-          </button>
-        </div>
-      )}
-    </main>
+      </section>
+    </> // End of the fragment
   ) // End of the JSX
 } // End of the App component

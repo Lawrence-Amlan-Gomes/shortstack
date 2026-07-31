@@ -74,6 +74,7 @@ app.post('/api/links', createLinkLimiter); // Apply the link-creation rate limit
 app.use('/api/links', linkRouter); // Hand off any request under '/api/links' to the link routes
 app.post('/api/auth/register', authLimiter); // Apply the auth rate limiter only to POST requests on '/api/auth/register'
 app.post('/api/auth/login', authLimiter); // Apply the auth rate limiter only to POST requests on '/api/auth/login'
+app.post('/api/auth/refresh', authLimiter); // Apply the auth rate limiter only to POST requests on '/api/auth/refresh'
 app.use('/api/auth', authRouter); // Hand off any request under '/api/auth' to the auth routes
 
 app.use(errorHandler); // Catch any error that reached this point without being handled, and send back a clean 500 response

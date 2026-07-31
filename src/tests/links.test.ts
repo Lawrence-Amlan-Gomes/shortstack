@@ -6,6 +6,7 @@
 import request from "supertest"; // Bring in 'supertest', used to send fake HTTP requests to our app without a real server
 import { Worker } from "bullmq"; // Bring in BullMQ's 'Worker' type, just so we can type our worker variable correctly
 import jwt from "jsonwebtoken"; // Bring in 'jsonwebtoken', used to create login tokens directly for test setup
+import crypto from "crypto"; // Bring in Node's built-in 'crypto' tool, used to hash a fake refresh token the same way auth.ts does
 import { app } from "../app"; // Bring in the actual Express app we're testing
 import { pool } from "../db/pool"; // Bring in the database connection
 import { redis } from "../redis/client"; // Bring in the Redis connection
@@ -280,3 +281,68 @@ describe("POST /api/auth/login", () => { // Group all tests about logging in tog
     expect(createRes2.body.error).toBe("invalid credentials"); // Check that the error message doesn't reveal which part was wrong
   }); // End of the wrong-password test
 }); // End of the "POST /api/auth/login" test group
+
+describe("POST /api/auth/refresh", () => { // Group all tests about refreshing tokens together
+  it("exchanges a valid refresh token for a new token pair", async () => { // Test: a fresh, unused refresh token should work
+    const registerRes = await request(app) // Wait while we register a new user
+      .post("/api/auth/register") // Send it as a POST to '/api/auth/register'
+      .send({ email: "refresh1@example.com", password: "12345678", app: "app1" }); // With a brand-new email, password, and app name
+    const { refreshToken } = registerRes.body; // Pull the refresh token out of the registration response
+
+    const res = await request(app) // Wait while we try to use it to get a new token pair
+      .post("/api/auth/refresh") // Send it as a POST to '/api/auth/refresh'
+      .send({ refreshToken }); // With the refresh token we just got
+
+    expect(res.status).toBe(200); // Check that the response status code was 200 (ok)
+    expect(res.body).toHaveProperty("token"); // Check that a new access token came back
+    expect(res.body).toHaveProperty("refreshToken"); // Check that a new refresh token came back too
+    expect(res.body.refreshToken).not.toBe(refreshToken); // Check that the new refresh token is different from the old one (rotation happened)
+  }); // End of the successful-refresh test
+
+  it("rejects a refresh token that was already rotated out", async () => { // Test: reusing a spent refresh token should fail
+    const registerRes = await request(app) // Wait while we register a new user
+      .post("/api/auth/register") // Send it as a POST to '/api/auth/register'
+      .send({ email: "refresh2@example.com", password: "12345678", app: "app1" }); // With a brand-new email, password, and app name
+    const { refreshToken } = registerRes.body; // Pull the original refresh token out of the registration response
+
+    await request(app).post("/api/auth/refresh").send({ refreshToken }); // Wait while we use it once, which rotates it out
+
+    const res = await request(app) // Wait while we try to use the exact same, now-spent token again
+      .post("/api/auth/refresh") // Send it as a POST to '/api/auth/refresh'
+      .send({ refreshToken }); // With the same, already-used refresh token
+
+    expect(res.status).toBe(401); // Check that the response status code was 401 (not allowed)
+    expect(res.body.error).toBe("refresh token already used"); // Check that the error explains this was a reuse, not just an unknown token
+  }); // End of the reuse-rejection test
+
+  it("rejects a refresh token that was never issued", async () => { // Test: a made-up refresh token should fail
+    const res = await request(app) // Wait while we try to refresh using a completely made-up token
+      .post("/api/auth/refresh") // Send it as a POST to '/api/auth/refresh'
+      .send({ refreshToken: "not-a-real-token" }); // With text that was never actually issued to anyone
+
+    expect(res.status).toBe(401); // Check that the response status code was 401 (not allowed)
+    expect(res.body.error).toBe("invalid refresh token"); // Check that the error explains the token is unknown
+  }); // End of the invalid-token test
+
+  it("rejects a refresh token that has expired", async () => { // Test: an old, expired refresh token should fail even though it was never used
+    await request(app) // Wait while we register a new user
+      .post("/api/auth/register") // Send it as a POST to '/api/auth/register'
+      .send({ email: "refresh3@example.com", password: "12345678", app: "app1" }); // With a brand-new email, password, and app name
+    const userRow = await pool.query<{ id: number }>("SELECT id FROM users WHERE email = $1", ["refresh3@example.com"]); // Wait while we look up this new user's id directly in the database
+    const userId = userRow.rows[0].id; // Pull the id out of the lookup result
+
+    const rawToken = "expired-test-token"; // Make up a raw token's text, just for this test
+    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex"); // Hash it the exact same way auth.ts does, so the refresh route's lookup will find it
+    await pool.query( // Wait while we insert an already-expired refresh token directly into the database
+      "INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, NOW() - INTERVAL '1 day')", // Add a row whose expiry was set to 1 day ago
+      [userId, tokenHash] // Fill in the owner and the hash, safely
+    ); // End of the insert
+
+    const res = await request(app) // Wait while we try to refresh using this expired token
+      .post("/api/auth/refresh") // Send it as a POST to '/api/auth/refresh'
+      .send({ refreshToken: rawToken }); // With the raw (un-hashed) token text, same as a real client would send
+
+    expect(res.status).toBe(401); // Check that the response status code was 401 (not allowed)
+    expect(res.body.error).toBe("refresh token expired"); // Check that the error explains it's expired, not just unknown
+  }); // End of the expired-token test
+}); // End of the "POST /api/auth/refresh" test group
