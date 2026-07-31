@@ -193,18 +193,21 @@ Lawrence confirmed this works. Do not deviate.
 
 ---
 
-## Code Comment Convention (RULE, 2026-07-23)
+## Code Comment Convention (RULE, updated 2026-08-01)
 
-Lawrence is not a native English speaker learning to code — every file needs heavy, plain-English comments so he can read the code later and actually understand it, not just run it.
+**RULE CHANGE (2026-08-01, part 1): No more comment-per-line.** The old "every code line gets an inline comment" rule is retired — it produced walls of noise comments on self-explanatory lines. Lawrence's instruction: "remove commented line from every code line and only write valid comment in few important places where its actually worth commenting."
 
-**Top of every file:** one comment block explaining what the file does, in simple words. Example: `// This is the migrate.ts file. What this file does is set up the database structure...`
+**RULE CHANGE (2026-08-01, part 2): Write comments like a senior engineer, not a tutorial.** Lawrence's instruction: "make the comments like its a senior software developer written, not tutorial anymore." No more explaining basic language mechanics ("this brings in the package", "this checks if X, if so do Y"). No top-of-file "plain English" teaching block either — the old tutorial-summary style is fully retired, not just the per-line version.
 
-**Every code line:** an inline comment in easy vocabulary, simple sentences, explaining what that line does. Example:
-```ts
-const PORT = process.env.PORT ?? 3000; // Use the PORT value from the environment, or 3000 if none is set
-```
+**Current rule:** Comment like production code written by a senior engineer for other senior engineers:
+- Comment only what isn't obvious from well-named code: non-obvious tradeoffs, hidden constraints, why something is done a certain way, gotchas, TODOs, or intentionally-unused-for-now code (explain why it's kept).
+- Use terse, professional phrasing — not explanations of basic syntax or control flow.
+- JSDoc-style `/** ... */` above a function/type is fine for a one-line "what and why" when it adds real value (e.g. "currently unused; kept for X").
+- No comment at all is the correct choice for most lines. Silence is the default.
 
-**Repeated patterns:** if the same kind of logic shows up in another file, don't just repeat the same wall of comments — write one comment above the block pointing back, e.g. `// This creates a table the same way as in migrate.ts — see that file to learn the pattern`, then the code.
+**Repeated patterns:** a short pointer comment (`// same table-creation pattern as migrate.ts`) is fine instead of re-explaining.
+
+**Existing files still in the old dense-comment style:** don't blanket-strip unprompted, but new code added to them should follow the new senior-dev rule. If asked to clean up a file, strip tutorial comments down to what a senior engineer would actually leave.
 
 **CRITICAL GOTCHA — SQL (or any string) inside a template literal:** JavaScript's `//` is NOT a comment inside backtick strings — it's literal text, and it will corrupt the actual string (e.g. break the SQL sent to Postgres with a syntax error). This actually happened and was caught via a crash log the first time this rule was applied to `migrate.ts`. Inside backtick-delimited SQL, use SQL's own comment syntax (`--`) instead, which Postgres safely ignores. Outside the backticks (the surrounding JS), normal `//` is correct. The same caution applies to any other language embedded as a string (e.g. inline shell, other query languages) — use that language's own comment syntax inside its string, `//` only for the actual JS/TS lines.
 

@@ -6,14 +6,14 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 
 ## Current Phase
 
-**Session 13 complete** — multi-tenant auth is now actually enforced (was fake: JWTs issued but never verified, no `user_id` on links). Link creation stays anonymous-allowed by design (matches the live site's original UX) but attaches the real owner when a valid token is present. Five real bugs found and fixed along the way (slug collisions, duplicated redirect logic, silent JWT_SECRET fallback, an untested BullMQ click pipeline, test-cleanup ordering). Full Jest + Supertest suite added (17 tests, real Postgres/Redis, no mocks). Every file now has plain-English comments (top-of-file summary + per-line). Pushed to `main`, Coolify redeploying. Next: token refresh (short-lived access tokens + long-lived refresh tokens) for the register/login endpoints, which exist and work but aren't used by the frontend yet.
+**Session 15 complete** — token refresh shipped (short-lived 15m access tokens + rotating 30d refresh tokens, reuse/expiry detection), and the landing page gained a second full-viewport section showing the system architecture diagram below the shorten form. Pushed to `main` (`24218b3`), Coolify redeploying. Next: confirm the deploy landed cleanly and the diagram renders correctly on the live site (only checked locally so far).
 
 ## Architecture
 
 - **Runtime:** Node.js + TypeScript
 - **Framework:** Express 5
 - **Entry:** `src/index.ts` (migration → listen) → `src/app.ts` (routes + middleware)
-- **Frontend:** `client/` — Vite + React + TypeScript. Built to `client/dist/`, served by `express.static`. No login screen — anonymous shorten form only. Local dev default: single-port, build the client (`npm run build` in `client/`) and let Express serve it, same as production. Vite dev on `:5173` with `/api` proxy is still available for hot-reload frontend iteration (proxy target in `client/vite.config.ts` is hardcoded to `:3000` — update it locally if the API is running on a different port)
+- **Frontend:** `client/` — Vite + React + TypeScript. Built to `client/dist/`, served by `express.static`. No login screen — anonymous shorten form only. Landing page is two stacked full-viewport (`100vh`) sections: `.hero` (the shorten form) and `.architecture` (system architecture diagram, served from `client/public/system-architecture-diagram.png`). Local dev default: single-port, build the client (`npm run build` in `client/`) and let Express serve it, same as production. Vite dev on `:5173` with `/api` proxy is still available for hot-reload frontend iteration (proxy target in `client/vite.config.ts` must match whatever port the backend runs on locally — this has drifted stale before, check it if `/api` calls silently fail in Vite dev mode)
 - **Routes:**
   - `GET /` — serves React SPA (via express.static)
   - `GET /health` — server alive check
@@ -21,14 +21,15 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
   - `POST /api/links` — create short URL (Zod validated). Login is optional (`optionalAuthenticate`) — anonymous creation allowed (`user_id` null), attaches the real owner if a valid `Bearer` token is present. Retries on slug collision (Postgres `23505`) up to 5 times
   - `GET /api/links/:slug` — redirect (via linkRouter), same shared `resolveSlug()`
   - `GET /api/links/:slug/stats` — click count for a slug
-  - `POST /api/auth/register` — multi-tenant register (email, password, app). Exists and works; not called by the frontend yet (no login UI)
-  - `POST /api/auth/login` — multi-tenant login (email, password, app). Same as above
+  - `POST /api/auth/register` — multi-tenant register (email, password, app). Returns a 15-minute access token + a 30-day refresh token. Exists and works; not called by the frontend yet (no login UI)
+  - `POST /api/auth/login` — multi-tenant login (email, password, app). Same token pair as above
+  - `POST /api/auth/refresh` — exchanges a valid, unused, unexpired refresh token for a new access + refresh token pair (rotation — the old refresh token is marked `revoked_at` and can't be reused). Rejects unknown/reused/expired tokens with distinct error messages
 - **Middleware:** `src/middleware/errorHandler.ts`, `src/middleware/authenticate.ts` (`authenticate` — strict, 401 on missing/invalid token, currently unused by any route; `optionalAuthenticate` — never blocks, used by `POST /api/links`), `cors`, `express.static`
 - **Database:** PostgreSQL via `pg` pool — `src/db/pool.ts`
 - **Cache:** Redis via `ioredis` — `src/redis/client.ts` (cache-aside on slug lookups, 24h TTL). Also exports `redisConnection` config for BullMQ
 - **Queue:** BullMQ — `src/queues/clickQueue.ts` (producer), `src/workers/clickWorker.ts` (consumer). Click recording async — job enqueued on redirect, worker INSERTs into DB. Worker starts in-process at boot.
-- **Migration:** `src/db/migrate.ts` — runs on boot, creates `links`, `clicks`, `users` tables. `links.user_id` (nullable, `REFERENCES users(id)`) added Session 13
-- **Testing:** `src/tests/links.test.ts` — Jest + Supertest against a real Postgres test DB and real Redis (not mocked), including the BullMQ worker actually running so click recording is verified end-to-end, not just the enqueue side. `npm test` (needs `.env.test`, see `.env.test.example`; `npm run test:setup` creates the test DB once)
+- **Migration:** `src/db/migrate.ts` — runs on boot, creates `links`, `clicks`, `users`, `refresh_tokens` tables. `links.user_id` (nullable, `REFERENCES users(id)`) added Session 13. `refresh_tokens` (`user_id`, `token_hash`, `expires_at`, `revoked_at`) added Session 15 — stores only the SHA-256 hash of each refresh token, never the raw value
+- **Testing:** `src/tests/links.test.ts` — Jest + Supertest against a real Postgres test DB and real Redis (not mocked), including the BullMQ worker actually running so click recording is verified end-to-end, not just the enqueue side. 21 tests. `npm test` (needs `.env.test`, see `.env.test.example`; `npm run test:setup` creates the test DB once)
 - **Observability:** Bull Board at `/admin/queues` — queue UI, protected by `express-basic-auth` (reads `BULL_BOARD_USER` / `BULL_BOARD_PASSWORD` env vars)
 - **Proxy:** Nginx — `nginx/nginx.conf` (conf baked into `nginx/Dockerfile`). Uses Docker resolver `127.0.0.11` + variable upstream for runtime DNS. Sits between Traefik and Express.
 - **Deploy:** `docker-compose.yml` (app + nginx services) → GitHub → Coolify docker-compose buildpack → VPS. App joins `coolify` external network to reach Redis.
@@ -83,6 +84,9 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 | Real integration test suite (Jest + Supertest, real Postgres/Redis) | Mocked tests can pass while the real thing is broken — this project's whole click-recording pipeline had exactly that gap (enqueue tested, worker never run in tests) until this session | 2026-07-23 |
 | Every source file gets plain-English comments | Lawrence is not a native English speaker and wants to be able to read any file back later and understand it line by line — top-of-file summary plus a comment on every code line. Full spec in `skill_coFounder.md` | 2026-07-23 |
 | Local dev defaults to single-port (Express serves built client) | Matches production's serving model exactly, avoids proxy/port-mismatch bugs (one already happened: Vite's proxy pointed at the wrong port and silently hit a different local project). Vite dev server still available when hot-reload frontend iteration is specifically wanted | 2026-07-23 |
+| Refresh tokens stored as SHA-256 hash, not raw | Same principle as password hashing — if the DB ever leaks, stored tokens are useless to an attacker. SHA-256 (not bcrypt) is fine here since the input is already random and unguessable, not a human-chosen secret | 2026-07-31 |
+| Refresh token rotation (one-time use) | Every successful `/refresh` call revokes the old token and issues a new one. Reuse of an already-rotated token is treated as a theft signal (401, distinct error), not a normal retry | 2026-07-31 |
+| Landing page split into two full-viewport sections | Shorten form (`.hero`) and system architecture diagram (`.architecture`) each get their own `100vh` section instead of one continuously-scrolling page — matches the "one clear thing per screen" presentation style requested for the diagram | 2026-07-31 |
 
 ## Skills
 
