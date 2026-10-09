@@ -3,6 +3,7 @@ services:
     name: shortstack-lawrence
     runtime: docker
     plan: free
+    region: singapore
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
