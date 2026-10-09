@@ -6,7 +6,7 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 
 ## Current Phase
 
-**Session 15 complete** — token refresh shipped (short-lived 15m access tokens + rotating 30d refresh tokens, reuse/expiry detection), and the landing page gained a second full-viewport section showing the system architecture diagram below the shorten form. Pushed to `main` (`24218b3`), Coolify redeploying. Next: confirm the deploy landed cleanly and the diagram renders correctly on the live site (only checked locally so far).
+**Fresh deployment migration in progress (2026-10-09).** Coolify is no longer the target. Lawrence chose to start with an empty database and requires $0 hosting with no payment card. The target is Render Free for the Docker web app, Neon Free for PostgreSQL, and Upstash Free for Redis/BullMQ. `render.yaml` and the Redis connection fix were pushed in `0f9e6c0`; the app has not been deployed to the new services. See `MIGRATION.md` for current status and the shared Codex/Claude access path.
 
 ## Architecture
 
@@ -32,17 +32,15 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 - **Testing:** `src/tests/links.test.ts` — Jest + Supertest against a real Postgres test DB and real Redis (not mocked), including the BullMQ worker actually running so click recording is verified end-to-end, not just the enqueue side. 21 tests. `npm test` (needs `.env.test`, see `.env.test.example`; `npm run test:setup` creates the test DB once)
 - **Observability:** Bull Board at `/admin/queues` — queue UI, protected by `express-basic-auth` (reads `BULL_BOARD_USER` / `BULL_BOARD_PASSWORD` env vars)
 - **Proxy:** Nginx — `nginx/nginx.conf` (conf baked into `nginx/Dockerfile`). Uses Docker resolver `127.0.0.11` + variable upstream for runtime DNS. Sits between Traefik and Express.
-- **Deploy:** `docker-compose.yml` (app + nginx services) → GitHub → Coolify docker-compose buildpack → VPS. App joins `coolify` external network to reach Redis.
-- **Request chain:** Internet → Traefik (SSL, port 443) → Nginx (port 80, internal) → Express (port 3000, internal)
-- **Live:** https://shortstack.lawrenceamlangomes.com
+- **Deploy target:** `render.yaml` defines a Render Free Docker web service from the GitHub repo. Express serves the built React app. Neon supplies PostgreSQL; Upstash supplies Redis and BullMQ. The old `docker-compose.yml` and Nginx files describe the previous Coolify deployment only.
+- **Request chain after migration:** Internet → Render TLS proxy → Express (container port 3000)
+- **Live status:** The old domain currently returns 503. No new deployment URL exists yet.
 
 ## Infrastructure
 
-- **VPS:** Hostinger, IP `185.201.8.71`
-- **Coolify:** https://coolify.lawrenceamlangomes.com
-- **Postgres:** Coolify service, port 5432 publicly exposed
-- **Redis:** Coolify service, on `coolify` Docker network (hostname `p14b0g5b0bem8q55tj3pehgv`)
-- **Env vars in Coolify:** `DATABASE_URL`, `BASE_URL`, `JWT_SECRET`, `FRONTEND_URL`, `REDIS_URL`, `BULL_BOARD_USER`, `BULL_BOARD_PASSWORD`
+- **Target services:** Render Free web service, Neon Free PostgreSQL, Upstash Free Redis. None has been created or connected for this migration yet.
+- **Required runtime configuration:** `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `BULL_BOARD_USER`, `BULL_BOARD_PASSWORD`. Render sets its hostname; `BASE_URL` can override it if a custom domain is attached.
+- **Former infrastructure:** Hostinger VPS and Coolify. The user explicitly abandoned old database recovery and chose a fresh start.
 
 ## Key Decisions Log
 
