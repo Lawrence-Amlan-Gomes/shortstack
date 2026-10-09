@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: shortstack-lawrence
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: BULL_BOARD_USER
+        value: admin
+      - key: BULL_BOARD_PASSWORD
+        generateValue: true

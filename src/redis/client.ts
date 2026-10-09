@@ -8,4 +8,5 @@ redis.on('error', (err) => {
   console.error('Redis error:', err);
 });
 
-export const redisConnection = { url: redisUrl };
+// BullMQ needs parsed host and TLS options plus unlimited retries for blocking reads.
+export const redisConnection = { ...redis.options, maxRetriesPerRequest: null };

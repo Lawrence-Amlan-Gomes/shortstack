@@ -71,7 +71,10 @@ linkRouter.post('/', optionalAuthenticate, async (req: Request, res: Response) =
   const savedSlug = await insertLinkWithUniqueSlug(url, userId ?? null);
 
   await redis.set(`slug:${savedSlug}`, url, 'EX', 86400); // warm cache so the first visit is already a HIT
-  const base = process.env.BASE_URL ?? 'http://localhost:3000';
+  const base = process.env.BASE_URL
+    ?? (process.env.RENDER_EXTERNAL_HOSTNAME
+      ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME}`
+      : 'http://localhost:3000');
   res.status(201).json({ slug: savedSlug, short: `${base}/${savedSlug}` });
 });
 
