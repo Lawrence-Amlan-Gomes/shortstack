@@ -1,34 +1,28 @@
-# ShortStack fresh deployment
+# ShortStack deployment
 
-## Decision
+## Live deployment
 
-- $0 hosting with no payment card.
-- Start with an empty PostgreSQL database; do not recover old Coolify data.
-- Preserve the current Express, React, PostgreSQL, Redis, and BullMQ behavior.
-- Target: Render Free Docker web service, Neon Free PostgreSQL, Upstash Free Redis.
-- Keep code and deployment configuration in this GitHub repository so Codex and Claude can both operate the project.
+- Public URL: https://shortstack.lawrenceamlangomes.com
+- Render Free Docker web service: `shortstack-lawrence` (`srv-db4iet2d0e5s73cfh5p0`), Singapore. Render fallback URL: https://shortstack-lawrence.onrender.com
+- Neon Free PostgreSQL 16 project: `shortstack` (`twilight-fire-74293725`), Singapore. Database: `shortstack`.
+- Upstash Free Redis: `shortstack` (`8143338d-d9ae-4fa0-9dd4-ce56c3538b93`), Singapore, TLS. The database was claimed into the account and has an active Free plan.
+- Porkbun DNS: `shortstack.lawrenceamlangomes.com` is a CNAME to `shortstack-lawrence.onrender.com`. Render has verified the custom domain and issued TLS. `BASE_URL` is set to the public URL in Render and `render.yaml`.
 
-## Current status
+No old Coolify data was imported. The fresh Neon application tables were empty after the live proof run. The new service, database, and Redis are all on Free plans; no payment card was entered for this migration.
 
-- `render.yaml` defines a free Render Docker web service and prompts for `DATABASE_URL` and `REDIS_URL` during creation. It generates `JWT_SECRET` and the Bull Board password.
-- `src/redis/client.ts` passes parsed host, credentials, and TLS options to BullMQ.
-- `src/routes/links.ts` uses `RENDER_EXTERNAL_HOSTNAME` for new short URLs when `BASE_URL` is unset.
-- Server and client production builds passed locally. YAML parsing passed. Changes were pushed to `main` in `0f9e6c0`.
-- A fresh Neon Free PostgreSQL 16 project, `shortstack` (`twilight-fire-74293725`), exists in Singapore. Its empty `shortstack` database has the application tables from `src/db/migrate.ts`. No old Coolify data was imported.
-- The Render CLI is logged in to `Amlan's workspace` and the Neon CLI is logged in through the macOS keyring. Both are available to Codex and Claude Code under the same macOS user. Render has no ShortStack service yet.
-- Upstash CLI 1.5.0 is installed. Its MCP server and skill are configured for both Codex and Claude Code. Codex MCP OAuth succeeded; Claude Code's separate OAuth consent is pending. The CLI requires a separate account email/API key and is not logged in. The anonymous Redis database `8143338d-d9ae-4fa0-9dd4-ce56c3538b93` remains temporary and expires on 2026-10-12 unless claimed. It has no application data. No payment card has been added.
+## Verification (2026-10-09)
 
-## Next sequence
-
-1. Claim the temporary Upstash database into the account or create an account-owned Free database, then obtain its TCP Redis URL and confirm its Free plan.
-2. Create the Render Free web service, supplying the Neon and Upstash URLs through Render's secret fields.
-3. Verify `/health`, homepage, link creation, redirect, click count, auth, and refresh on the Render URL.
-4. Change DNS only if the existing domain remains registered and its DNS can be managed without a new payment.
+- Render deploy `dep-db4ieu2d0e5s73cfh88g` went live; the `BASE_URL` env update deploy `dep-db4ihp2j9qps73cm7b60` also went live.
+- Production server and client builds and Render Blueprint validation passed.
+- At the Render URL: `/health`, React homepage, invalid URL rejection, anonymous link creation, Upstash cache hit, redirect, BullMQ click write to Neon, register, login, refresh rotation, and reused-token rejection passed.
+- At the custom domain: valid HTTPS, `/health`, homepage, short-link response using the custom hostname, redirect, and BullMQ click count passed. The final-domain test used Render edge resolution while a local DNS cache still held the old VPS IP. Proof links, clicks, users, tokens, and cache keys were deleted after testing.
 
 ## Shared agent access
 
-The co-founder role can run in Codex or Claude Code. The authenticated Render and Neon CLIs, GitHub CLI, and repository are shared on this machine. The Upstash CLI and its remote MCP integration are installed for both clients; the Upstash account still needs authorization. A ChatGPT plugin connection does not authorize Claude Code; each MCP client needs its own OAuth authorization unless a provider CLI login in the shared local user account is used. Never paste provider passwords, API keys, or connection strings into this file or a chat message.
+The co-founder role may run in Codex or Claude Code on this Mac. Render CLI and Neon CLI are authenticated for the local user; GitHub CLI can push this repository. Both Codex and Claude Code have authenticated Upstash MCP access. Both have Porkbun's `no-purchases` MCP endpoint configured; its OAuth credentials are in the shared local `mcp-remote` store. Porkbun DNS access cannot buy or charge anything through this endpoint. Upstash CLI is installed, but its separate email/API-key login is unnecessary for normal MCP work.
 
-## Free plan constraints
+Use `render services`, `neon projects list`, the configured Upstash MCP server, and the Porkbun MCP server for future operations. Keep `DATABASE_URL`, `REDIS_URL`, JWT secrets, and provider credentials out of this repository and chat messages. The Render service was created through the CLI with its environment variables set in Render; `render.yaml` records the intended Free configuration but is not linked as a Blueprint.
 
-Render Free web services sleep after 15 minutes idle and have monthly quotas. Neon and Upstash also have free usage limits. Upstash supports BullMQ, but BullMQ's idle polling consumes Redis commands. Do not switch to paid resources or add a payment card.
+## Free-plan limits and domain
+
+Render Free sleeps after idle time and has monthly quotas. Neon and Upstash have Free usage limits; BullMQ idle polling consumes Redis commands. The existing Porkbun domain is already registered through **2027-01-15** with auto-renew off. Keeping the same custom domain past that date requires renewal, so the custom URL cannot be guaranteed at $0 indefinitely.

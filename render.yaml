@@ -8,6 +8,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: BASE_URL
+        value: https://shortstack.lawrenceamlangomes.com
       - key: DATABASE_URL
         sync: false
       - key: REDIS_URL

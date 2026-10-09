@@ -6,7 +6,7 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 
 ## Current Phase
 
-**Fresh deployment migration in progress (2026-10-09).** Coolify is no longer the target. Lawrence chose to start with an empty database and requires $0 hosting with no payment card. The target is Render Free for the Docker web app, Neon Free for PostgreSQL, and Upstash Free for Redis/BullMQ. The fresh Neon database is ready; Upstash account authorization and Render deployment remain. See `MIGRATION.md` for current status and the shared Codex/Claude access path.
+**Live on the new Free stack (2026-10-09).** ShortStack runs at https://shortstack.lawrenceamlangomes.com on Render Free, Neon Free PostgreSQL, and Upstash Free Redis/BullMQ. Coolify is no longer used. The database was reset with no old data imported. See `MIGRATION.md` for resource IDs, verification, and shared Codex/Claude access.
 
 ## Architecture
 
@@ -34,11 +34,11 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 - **Proxy:** Nginx — `nginx/nginx.conf` (conf baked into `nginx/Dockerfile`). Uses Docker resolver `127.0.0.11` + variable upstream for runtime DNS. Sits between Traefik and Express.
 - **Deploy target:** `render.yaml` defines a Render Free Docker web service from the GitHub repo. Express serves the built React app. Neon supplies PostgreSQL; Upstash supplies Redis and BullMQ. The old `docker-compose.yml` and Nginx files describe the previous Coolify deployment only.
 - **Request chain after migration:** Internet → Render TLS proxy → Express (container port 3000)
-- **Live status:** The old domain currently returns 503. No new deployment URL exists yet.
+- **Live status:** The original hostname now points to Render, is verified there, and has valid HTTPS. DNS caches may briefly retain the old VPS IP during cutover.
 
 ## Infrastructure
 
-- **Target services:** Neon Free PostgreSQL project `shortstack` (`twilight-fire-74293725`) is created in Singapore and has the application schema. Render Free web service and a claimed Upstash Free Redis are pending.
+- **Production services:** Render Free Docker `shortstack-lawrence` (`srv-db4iet2d0e5s73cfh5p0`), Neon Free PostgreSQL `shortstack` (`twilight-fire-74293725`), and claimed Upstash Free Redis `shortstack` (`8143338d-d9ae-4fa0-9dd4-ce56c3538b93`) run in Singapore. Porkbun DNS has a CNAME for `shortstack` to Render.
 - **Required runtime configuration:** `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `BULL_BOARD_USER`, `BULL_BOARD_PASSWORD`. Render sets its hostname; `BASE_URL` can override it if a custom domain is attached.
 - **Former infrastructure:** Hostinger VPS and Coolify. The user explicitly abandoned old database recovery and chose a fresh start.
 
