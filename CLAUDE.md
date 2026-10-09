@@ -6,7 +6,7 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 
 ## Current Phase
 
-**Fresh deployment migration in progress (2026-10-09).** Coolify is no longer the target. Lawrence chose to start with an empty database and requires $0 hosting with no payment card. The target is Render Free for the Docker web app, Neon Free for PostgreSQL, and Upstash Free for Redis/BullMQ. `render.yaml` and the Redis connection fix were pushed in `0f9e6c0`; the app has not been deployed to the new services. See `MIGRATION.md` for current status and the shared Codex/Claude access path.
+**Fresh deployment migration in progress (2026-10-09).** Coolify is no longer the target. Lawrence chose to start with an empty database and requires $0 hosting with no payment card. The target is Render Free for the Docker web app, Neon Free for PostgreSQL, and Upstash Free for Redis/BullMQ. The fresh Neon database is ready; Upstash account authorization and Render deployment remain. See `MIGRATION.md` for current status and the shared Codex/Claude access path.
 
 ## Architecture
 
@@ -38,7 +38,7 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 
 ## Infrastructure
 
-- **Target services:** Render Free web service, Neon Free PostgreSQL, Upstash Free Redis. None has been created or connected for this migration yet.
+- **Target services:** Neon Free PostgreSQL project `shortstack` (`twilight-fire-74293725`) is created in Singapore and has the application schema. Render Free web service and a claimed Upstash Free Redis are pending.
 - **Required runtime configuration:** `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `BULL_BOARD_USER`, `BULL_BOARD_PASSWORD`. Render sets its hostname; `BASE_URL` can override it if a custom domain is attached.
 - **Former infrastructure:** Hostinger VPS and Coolify. The user explicitly abandoned old database recovery and chose a fresh start.
 
