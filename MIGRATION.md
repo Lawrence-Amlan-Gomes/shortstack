@@ -16,11 +16,11 @@
 - Server and client production builds passed locally. YAML parsing passed. Changes were pushed to `main` in `0f9e6c0`.
 - A fresh Neon Free PostgreSQL 16 project, `shortstack` (`twilight-fire-74293725`), exists in Singapore. Its empty `shortstack` database has the application tables from `src/db/migrate.ts`. No old Coolify data was imported.
 - The Render CLI is logged in to `Amlan's workspace` and the Neon CLI is logged in through the macOS keyring. Both are available to Codex and Claude Code under the same macOS user. Render has no ShortStack service yet.
-- Upstash CLI 1.5.0 is installed. Its MCP server and skill are configured for both Codex and Claude Code. Upstash account authorization is still pending. The anonymous Redis database `8143338d-d9ae-4fa0-9dd4-ce56c3538b93` remains temporary and expires on 2026-10-12 unless claimed. It has no application data. No payment card has been added.
+- Upstash CLI 1.5.0 is installed. Its MCP server and skill are configured for both Codex and Claude Code. Codex MCP OAuth succeeded; Claude Code's separate OAuth consent is pending. The CLI requires a separate account email/API key and is not logged in. The anonymous Redis database `8143338d-d9ae-4fa0-9dd4-ce56c3538b93` remains temporary and expires on 2026-10-12 unless claimed. It has no application data. No payment card has been added.
 
 ## Next sequence
 
-1. Complete Upstash OAuth or claim the temporary database into the account, then obtain its TCP Redis URL and confirm its Free plan.
+1. Claim the temporary Upstash database into the account or create an account-owned Free database, then obtain its TCP Redis URL and confirm its Free plan.
 2. Create the Render Free web service, supplying the Neon and Upstash URLs through Render's secret fields.
 3. Verify `/health`, homepage, link creation, redirect, click count, auth, and refresh on the Render URL.
 4. Change DNS only if the existing domain remains registered and its DNS can be managed without a new payment.

@@ -12,7 +12,7 @@
 - Added `MIGRATION.md` and `AGENTS.md` and refreshed `CLAUDE.md` for both agents. Pushed as `42bd5bf`.
 - Render CLI OAuth is complete for `Amlan's workspace`; Neon CLI OAuth is complete in the macOS keyring. Both CLIs are available to Codex and Claude Code on this machine.
 - Created fresh Neon Free PostgreSQL 16 project `shortstack` (`twilight-fire-74293725`) in Singapore and ran `src/db/migrate.ts`. Application tables exist with no old data.
-- Installed Upstash CLI 1.5.0 and configured its MCP server and skill for both coding clients. Upstash OAuth was initiated in Codex and its browser page opened, but account authorization is still pending.
+- Installed Upstash CLI 1.5.0 and configured its MCP server and skill for both coding clients. Codex MCP OAuth succeeded. Claude Code's separate OAuth consent is pending. The CLI requires a separate Upstash email/API key and is not logged in.
 - Created anonymous Upstash Redis `8143338d-d9ae-4fa0-9dd4-ce56c3538b93` and opened its claim page. It has zero keys and expires 2026-10-12 unless claimed; do not use it for production until claim and TCP credentials are confirmed.
 - GitHub CLI is already logged into the repository owner's account on this machine; Git pushes work.
 
