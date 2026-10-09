@@ -1,6 +1,6 @@
 # Co-Founder Notes — Index
 
-This folder is Claude's private workspace for this project. Not written for Lawrence to read — `skillCoFounder.md` points here instead of holding everything inline, so that file doesn't grow unbounded. Read and write freely.
+This folder holds the co-founder role's working notes across Codex and Claude Code sessions. Not written for Lawrence to read — `skill_coFounder.md` points here instead of holding everything inline, so that file doesn't grow unbounded. Read and write freely.
 
 ## Files
 

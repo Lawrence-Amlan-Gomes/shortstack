@@ -1,16 +1,14 @@
 # Dev Server Tracking
 
-Tracks the local dev server this Claude session started, so it can be found and killed reliably — including cleanup at `End Today`, and recovery if a previous session ended without cleaning up.
+Tracks the local dev server a co-founder session started, so it can be found and killed reliably — including cleanup at `End Today`, and recovery if a previous session ended without cleaning up.
 
-**Rule:** only ever kill a port/process recorded here as self-started. Never kill a port not created by this session's Claude.
+**Rule:** only ever kill a port/process recorded here as self-started. Never kill a port created outside the current co-founder session.
 
 ## Current state
 
-**Status:** running
+**Status:** not running
 
-- Backend: port `4000`, PID `63846` (`npm run dev`, nodemon watching `src/**/*.ts`), started this session (Session 16). Serving the built client (`client/dist`) single-port, matches production's serving model. Health check confirmed OK.
-
-(Kill at `End Today` and reset this section back to "not running.")
+- The previously recorded PID `63846` was absent when this session started. A fresh `PORT=4000 npm run dev` attempt was stopped after Redis connection refusals on `localhost:6379`; no process is listening on port `4000`.
 
 ## Notes carried over for next session
 

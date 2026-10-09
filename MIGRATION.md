@@ -27,7 +27,7 @@
 
 ## Shared agent access
 
-Render's hosted MCP endpoint is `https://mcp.render.com/mcp`; Neon's is `https://mcp.neon.tech/mcp`. Both providers document Claude and Codex support. Each client needs its own OAuth authorization or another approved credential path. Never paste provider passwords, API keys, or connection strings into this file or a chat message.
+The co-founder role can run in Codex or Claude Code. Render's hosted MCP endpoint is `https://mcp.render.com/mcp`; Neon's is `https://mcp.neon.tech/mcp`. Both providers document Claude and Codex support. The repository and GitHub CLI login are shared on this machine. A ChatGPT plugin connection does not authorize Claude Code; each MCP client needs its own OAuth authorization unless a provider CLI login in the shared local user account is used. Never paste provider passwords, API keys, or connection strings into this file or a chat message.
 
 ## Free plan constraints
 

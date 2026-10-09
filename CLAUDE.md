@@ -93,7 +93,7 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 | `skill_coFounder.md` | `@skill_coFounder.md` | Co-founder + senior mentor. Reads `co-founder/session-state.md`, briefs on progress, teaches while building. Say `End Today` to save session and update this file. Also defines the cross-project `Start Chat`/`End Chat` relay, the local dev-server start/stop rule, and the code comment convention. |
 | `skill_gitAddCommitPush.md` | `@skill_gitAddCommitPush.md` | Run build check, fix errors, commit, push to main. |
 
-`co-founder/` at the repo root is Claude's private working-notes folder (not for Lawrence) — `co-founder/index.md` lists what's in it, `co-founder/session-state.md` is the actual session log `skill_coFounder.md` reads/writes each session.
+`co-founder/` at the repo root holds working notes for the co-founder role in both Codex and Claude Code (not for Lawrence) — `co-founder/index.md` lists what's in it, `co-founder/session-state.md` is the session log `skill_coFounder.md` reads/writes.
 
 ## Do Not Touch
 
