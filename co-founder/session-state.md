@@ -7,6 +7,7 @@
 **Production:** Render Free Docker service `srv-db4iet2d0e5s73cfh5p0`, Neon Free project `twilight-fire-74293725`, and claimed Upstash Free Redis `8143338d-d9ae-4fa0-9dd4-ce56c3538b93` are live in Singapore. Porkbun CNAME points the original hostname to Render. The old Coolify/VPS deployment is no longer used.
 
 **Completed in this migration:**
+- At the second 2026-10-10 End Today, fixed 33 accidental executable-bit changes with no content edits. `git status --short` is empty; the repository is clean. The prior `M` markers were file-mode changes only.
 - Deployed the latest repository handoff commit to Render on 2026-10-10 and verified the production homepage and `/health` each return HTTP 200 at the original hostname. The live site does not redirect to Porkbun; that page was the DNS authorization tab.
 - Fixed BullMQ's Redis connection to use `ioredis`'s parsed host, credentials, and TLS options.
 - Added `render.yaml` with a free Docker web service and secret prompts; short URLs use Render's hostname by default. Server and client production builds passed. Pushed as `0f9e6c0`.
@@ -18,7 +19,7 @@
 - Added the original hostname as a Render custom domain; changed only its existing Porkbun `shortstack` A record to a CNAME for Render. Render verified the domain and HTTPS; `BASE_URL` now points to the custom hostname. Both coding clients have Porkbun's no-purchases MCP endpoint configured through the shared `mcp-remote` OAuth store.
 - GitHub CLI is already logged into the repository owner's account on this machine; Git pushes work.
 
-**Exact next action:** At the next session, choose the next ShortStack product feature and continue development. After future pushes, manually deploy the exact commit to Render: this service uses a public Git repository URL, which does not support native auto-deploys. See `MIGRATION.md`. No migration action is pending for Lawrence today.
+**Exact next action:** At the next session, choose the next ShortStack product feature and continue development. After future pushes, manually deploy the exact commit to Render: this service uses a public Git repository URL, which does not support native auto-deploys. See `MIGRATION.md`. No migration or Git-cleanup action is pending for Lawrence today.
 
 **Open constraints and risks:** No card, no paid tier, no old data import. Render Free sleeps after idle time; Upstash free command quota can be consumed by BullMQ polling. Porkbun domain expires 2027-01-15 with auto-renew off; maintaining the original custom hostname after that date requires renewal. Ordinary DNS now resolves to Render. The public-repository URL deployment method requires manual deploys until Git provider credentials are connected to Render. Do not commit `.env` or provider secrets.
 
