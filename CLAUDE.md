@@ -6,7 +6,7 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 
 ## Current Phase
 
-**Live on the new Free stack (2026-10-09).** ShortStack runs at https://shortstack.lawrenceamlangomes.com on Render Free, Neon Free PostgreSQL, and Upstash Free Redis/BullMQ. Coolify is no longer used. The database was reset with no old data imported. See `MIGRATION.md` for resource IDs, verification, and shared Codex/Claude access.
+**Live on the new Free stack (verified 2026-10-10).** ShortStack runs at https://shortstack.lawrenceamlangomes.com on Render Free, Neon Free PostgreSQL, and Upstash Free Redis/BullMQ. Coolify is no longer used. The database was reset with no old data imported. The original hostname serves ShortStack over HTTPS without a Porkbun redirect. See `MIGRATION.md` for resource IDs, verification, and shared Codex/Claude access.
 
 ## Architecture
 
@@ -34,7 +34,7 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 - **Proxy:** Nginx — `nginx/nginx.conf` (conf baked into `nginx/Dockerfile`). Uses Docker resolver `127.0.0.11` + variable upstream for runtime DNS. Sits between Traefik and Express.
 - **Deploy target:** `render.yaml` defines a Render Free Docker web service from the GitHub repo. Express serves the built React app. Neon supplies PostgreSQL; Upstash supplies Redis and BullMQ. The old `docker-compose.yml` and Nginx files describe the previous Coolify deployment only.
 - **Request chain after migration:** Internet → Render TLS proxy → Express (container port 3000)
-- **Live status:** The original hostname now points to Render, is verified there, and has valid HTTPS. DNS caches may briefly retain the old VPS IP during cutover.
+- **Live status:** The original hostname points to Render, is verified there, and has valid HTTPS. On 2026-10-10 the homepage and `/health` returned HTTP 200 without a redirect to Porkbun.
 
 ## Infrastructure
 
@@ -98,4 +98,4 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 ## Do Not Touch
 
 - `.env` — never commit, never share (DB credentials)
-- `185.201.8.71:5432` — Postgres publicly exposed for dev. Restrict to app-only when going to production.
+- Provider credentials and runtime secrets — keep outside Git and chat. The abandoned Coolify/VPS database is not part of the new deployment.
