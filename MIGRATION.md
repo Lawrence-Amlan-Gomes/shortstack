@@ -15,13 +15,13 @@ No old Coolify data was imported. The fresh Neon application tables were empty a
 - Render deploy `dep-db4ieu2d0e5s73cfh88g` went live; the `BASE_URL` env update deploy `dep-db4ihp2j9qps73cm7b60` also went live.
 - Production server and client builds and Render Blueprint validation passed.
 - At the Render URL: `/health`, React homepage, invalid URL rejection, anonymous link creation, Upstash cache hit, redirect, BullMQ click write to Neon, register, login, refresh rotation, and reused-token rejection passed.
-- At the custom domain: valid HTTPS, `/health`, homepage, short-link response using the custom hostname, redirect, and BullMQ click count passed. The final-domain test used Render edge resolution while a local DNS cache still held the old VPS IP. Proof links, clicks, users, tokens, and cache keys were deleted after testing.
+- At the custom domain: valid HTTPS, `/health`, homepage, short-link response using the custom hostname, redirect, and BullMQ click count passed. After the old DNS cache expired, ordinary DNS resolution returned the Render IP and the homepage and health route returned 200 without overrides. Proof links, clicks, users, tokens, and cache keys were deleted after testing.
 
 ## Shared agent access
 
 The co-founder role may run in Codex or Claude Code on this Mac. Render CLI and Neon CLI are authenticated for the local user; GitHub CLI can push this repository. Both Codex and Claude Code have authenticated Upstash MCP access. Both have Porkbun's `no-purchases` MCP endpoint configured; its OAuth credentials are in the shared local `mcp-remote` store. Porkbun DNS access cannot buy or charge anything through this endpoint. Upstash CLI is installed, but its separate email/API-key login is unnecessary for normal MCP work.
 
-Use `render services`, `neon projects list`, the configured Upstash MCP server, and the Porkbun MCP server for future operations. Keep `DATABASE_URL`, `REDIS_URL`, JWT secrets, and provider credentials out of this repository and chat messages. The Render service was created through the CLI with its environment variables set in Render; `render.yaml` records the intended Free configuration but is not linked as a Blueprint.
+Use `render services`, `neon projects list`, the configured Upstash MCP server, and the Porkbun MCP server for future operations. Keep `DATABASE_URL`, `REDIS_URL`, JWT secrets, and provider credentials out of this repository and chat messages. The Render service was created through the CLI with its environment variables set in Render; `render.yaml` records the intended Free configuration but is not linked as a Blueprint. The service uses a public Git repository URL, so Render does not auto-deploy commits even though its setting says `commit`. After pushing application changes, deploy the exact commit with `render deploys create srv-db4iet2d0e5s73cfh5p0 --commit <SHA> --wait --confirm`. Connecting a Git provider to Render would enable native auto-deploys later.
 
 ## Free-plan limits and domain
 
