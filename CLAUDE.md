@@ -8,6 +8,8 @@ URL shortener with click analytics. Built to learn elite backend engineering: Ex
 
 **Live on the new Free stack (verified 2026-10-10).** ShortStack runs at https://shortstack.lawrenceamlangomes.com on Render Free, Neon Free PostgreSQL, and Upstash Free Redis/BullMQ. Coolify is no longer used. The database was reset with no old data imported. The original hostname serves ShortStack over HTTPS without a Porkbun redirect. See `MIGRATION.md` for resource IDs, verification, and shared Codex/Claude access.
 
+Porkbun MCP is intentionally absent from global Codex and Claude Code startup configuration because it repeatedly opened an OAuth page when starting unrelated projects. Connect it only when a DNS task requires it; see `MIGRATION.md`.
+
 ## Architecture
 
 - **Runtime:** Node.js + TypeScript
