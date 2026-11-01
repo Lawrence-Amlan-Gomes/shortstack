@@ -6,12 +6,14 @@ Tracks the local dev server a co-founder session started, so it can be found and
 
 ## Current state
 
-**Status:** not running
+**Status:** running (started 2026-11-01 by a Claude Code co-founder session)
 
-- Started by a Claude Code session on 2026-10-09. At Codex End Today on 2026-10-10, PID `56948` was absent and port `4000` had no listener; Codex did not kill that process.
-- That session ran `PORT=4000 npm run dev` (nodemon + ts-node), PID `56948`. Log: `/tmp/shortstack-dev.log`.
-- That session built the client via `cd client && npm run build`; Express served it from `client/dist`. No separate Vite dev server was running.
-- Verified end-to-end against the live free stack: `/health` OK, link creation, Redis cache HIT on redirect, 301 redirect — then deleted the proof link/click rows from Neon.
+- Command: `PORT=4000 npm run dev` (nodemon + ts-node). Port `4000`.
+- PIDs: npm wrapper `6450`; node server `6781` (nodemon restarted it after the worker edit; originally `6474`). Re-check with `lsof -nP -iTCP:4000 -sTCP:LISTEN` before killing. Kill both at `End Today`.
+- Local dev shares the production Upstash Redis, so a running local worker spends the same 500k/month quota. Stop it when not actively developing.
+- Log: `/private/tmp/claude-501/-Users-lawrenceamlangomes-Documents-shortstack/3e4170a3-e023-42dd-8f35-b2650a2fc959/scratchpad/dev.log`
+- Serves the prebuilt `client/dist` via `express.static`; no Vite dev server running.
+- Verified: `/health` returns 200. Talks to the live Neon + Upstash free-tier resources via local `.env`.
 
 ## Root cause of an earlier session's failure (fixed 2026-10-09)
 
@@ -25,6 +27,6 @@ Both now live in local `.env` (never committed). Local dev now talks to the same
 
 ## Notes carried over for next session
 
-- Ports 3000 and 3001 have historically been occupied by Lawrence's *other* local projects (a Next.js app, and a Node+Express curriculum app using NextAuth) — check before assuming either is free. Port 4000 was the backend's last local port.
+- Ports 3000 and 3001 have historically been occupied by Lawrence's *other* local projects (a Next.js app, and a Node+Express curriculum app using NextAuth) — check before assuming either is free. Port 4000 is the backend's usual local port.
 - Local dev normally runs single-port: build the client (`npm run build` inside `client/`), then `npm run dev` (or `PORT=<port> npm run dev`) from the repo root — Express serves `client/dist` directly via `express.static`. Vite dev server on `:5173` is available in parallel for hot-reload frontend iteration, on request — if used, check `client/vite.config.ts`'s proxy target matches the backend's actual port first (it has drifted stale before).
-- `.env` changes require a manual server restart — nodemon only watches `src/**/*.ts`, not `.env`. (Not an issue this session since `.env` was fixed before first start.)
+- `.env` changes require a manual server restart — nodemon only watches `src/**/*.ts`, not `.env`.
